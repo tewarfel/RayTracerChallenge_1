@@ -1,11 +1,12 @@
 # RayTracerChallenge_1
-Description
+##Description
 snapshot of in-progress development of Python 3 code for "The Ray Tracer Challenge" by Jamis Buck, 
 published by Pragmatic Bookshelf at https://pragprog.com/book/jbtracer/the-ray-tracer-challenge .
 I am using the python Behave module (a cucumber-like module for Python) to implement and run the 
 .feature file tests.
 
-Overview
+
+##Overview
 This is a first-pass implementation of the functions / structures using Python3 covering content through
 the end of chapter 8. I have slightly modified the Gherkin feature test code to simplify parsing of matrix 
 and element definitions to use this implementation; some tests that pass are ahead of chapter 8 and I have
@@ -30,7 +31,7 @@ The "putting it together" example at the end of chapter 7, augmented by the addi
 chapter 8 and changing the left wall color to blue, is the code in "first_render.py".  
 
 
-Methods
+##Methods
 The Vec3 and Vec4 object classes have been augmented to track both total references used, as well 
 as maximum references in use.
 
@@ -42,23 +43,26 @@ macOS High Sierra, version 10.13.6.  Python version was 3.7.5 (from "homebrew" h
 and development environment was Pycharm Professional 2019.3 (https://www.jetbrains.com/pycharm/ ) using
 the yappi 1.2.3 profiler.  Program runs and renders as a single foreground thread.
 
-Results
-Without profiling or reference counting, execution time was 34 seconds.
-Without profiling (but with Vec3/Vec4 reference counting), execution time was 36 seconds.
-With profiling and Vec3/Vec4 reference counting, program execution time was 158 seconds, 
-but running time was 14 minutes.
+##Results
+*Without profiling or reference counting, execution time was **34 seconds**.
+
+*Without profiling (but with Vec3/Vec4 reference counting), execution time was **36 seconds**.
+
+*With profiling and Vec3/Vec4 reference counting, program execution time was **158 seconds**, 
+but running time was **14 minutes**.
 
 
 Call graph profile analysis (multiple runs) shows between 89-96% of time is spent 
 in "namedtuple". 
 
-Reference tracking showed that total Vec4 instances was 288,147 but that a maximum 
-of only 18 was active at any one time.
+Reference tracking showed that total Vec4 instances was **288,147** but that a maximum 
+of only **18** were active at any one time.
 
-Similarly, the total number of Vec3 instances was 33,381 but that a maximum of only 16
+Similarly, the total number of Vec3 instances was **33,381** but that a maximum of only **16**
 were active at any one time.
 
-So, finding a faster basis for the Vec3/Vec4 structures is probably one way to improve it.
+##Thoughts
+Finding a faster basis for the Vec3/Vec4 structures is probably the way to improve it.
 I'm going to pass on that for now to add the additional features for planes, cubes, 
 and triangles, and then revisit whether this still looks like the bottleneck.
 
