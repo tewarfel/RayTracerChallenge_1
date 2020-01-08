@@ -49,7 +49,6 @@ def cross(a,b):
     
 
 
-
 EPSILON = 0.00005
 
 def equal(a, b):
@@ -376,6 +375,9 @@ class Sphere(object):
 def sphere(sphere_material = None, sphere_transform = None):
     return Sphere(sphere_material, sphere_transform)
 
+def glass_sphere(sphere_material = material(transparency=1.0, refractive_index=1.5), sphere_transform = np.identity(4, dtype=float)):
+    return Sphere(sphere_material, sphere_transform)
+
 
 def set_transform(s, t):
     s.set_transform(t)
@@ -480,9 +482,32 @@ def intersect_world(w, r):
 
 
 class Computations(object):
-    def __init__(self, intersection, src_ray):
-        self.t = intersection.t
-        self.object = intersection.object
+    def __init__(self, hit_intersection, src_ray, full_intersection_list=None):
+        if full_intersection_list is None:
+            full_intersection_list = [hit_intersection]
+        containers = []
+        
+        for i in full_intersection_list:
+            if (hit_intersection.t == i.t) and (hit_intersection.object == i.object):
+                if len(containers) == 0:
+                    self.n1 = 1.0
+                else:
+                    self.n1 = containers[-1].material.refractive_index
+                    
+            if i.object in containers:
+                containers.remove(i.object)
+            else:
+                containers.append(i.object)
+             
+            if (hit_intersection.t == i.t) and (hit_intersection.object == i.object):
+                if len(containers) == 0:
+                    self.n2 = 1.0
+                else:
+                    self.n2 = containers[-1].material.refractive_index
+                break
+                
+        self.t = hit_intersection.t
+        self.object = hit_intersection.object
         self.point = position(src_ray, self.t)
         self.eye_vector = -src_ray.direction
         self.normal_vector = normal_at(self.object, self.point)
@@ -491,11 +516,20 @@ class Computations(object):
             self.normal_vector = -self.normal_vector
         else:
             self.inside = False
-        temp = (self.point + (EPSILON * self.normal_vector))
+        offset = (EPSILON * self.normal_vector)
+        temp = (self.point + offset)
         self.over_point = Vec4(temp[0], temp[1], temp[2], temp[3])
-        
-def prepare_computations(an_intersection, a_ray):
-    return Computations(an_intersection, a_ray)
+        temp = (self.point - offset)
+        self.under_point = Vec4(temp[0], temp[1], temp[2], temp[3])
+        self.reflect_vector = reflect(src_ray.direction, self.normal_vector)
+
+
+
+def prepare_computations(an_intersection, a_ray, full_intersection_list=None):
+    if full_intersection_list is None:
+        return Computations(an_intersection, a_ray)
+    else:
+        return Computations(an_intersection, a_ray, full_intersection_list)
 
 
 # assuming a single light source for now
@@ -555,8 +589,8 @@ def intersections(*arg):
 
 class Camera(object):
     def __init__(self, hsize, vsize, field_of_view):
-        self.hsize = hsize
-        self.vsize = vsize
+        self.hsize = int(hsize)
+        self.vsize = int(vsize)
         self.field_of_view = field_of_view
         self.transform = np.identity(4, dtype=float)
         self.inverse_transform = np.identity(4, dtype=float)

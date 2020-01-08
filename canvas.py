@@ -29,7 +29,14 @@ class Canvas:
             self.data[0, yi, xi] = color_value.red
             self.data[1, yi, xi] = color_value.green
             self.data[2, yi, xi] = color_value.blue
-        
+
+    def pixel_at(self, x, y):
+        xi = int(x + 0.5)
+        yi = int(y + 0.5)
+        r = self.data[0, xi, yi]
+        g = self.data[1, xi, yi]
+        b = self.data[2, xi, yi]
+        return(color(r,g,b))
         
     def write_image(self, filename):
         output_array = np.zeros((self.height, self.width, 3), dtype=np.uint8)
@@ -41,6 +48,8 @@ class Canvas:
 def canvas(width, height, background = None):
     if background is None:
         background = color(0,0,0)
+    width = int(width)
+    height = int(height)
     data = np.ndarray((3, height, width), dtype=np.float32)
     data[0, :, :] = background.red
     data[1, :, :] = background.green
@@ -49,9 +58,11 @@ def canvas(width, height, background = None):
 
 
 def write_pixel(canvas, x, y, color_value):
-    canvas.write_pixel(x, y, color_value)
+    return canvas.write_pixel(x, y, color_value)
 
 def write_image(canvas, filename):
-    canvas.write_image(filename)
+    return canvas.write_image(filename)
     
-   
+def pixel_at(canvas, x, y):
+    return canvas.pixel_at(x, y)
+

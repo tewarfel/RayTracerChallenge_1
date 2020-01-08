@@ -106,7 +106,6 @@ class Vec3(collections.namedtuple('Vec3','red green blue')):
                     -self.value.blue)
 
     def __eq__(self, other):
-        print("vec3 __eq__, type is ", str(type(other)))
         if str(type(other))=="<class 'vec3.Vec3'>":
             for i1 in range(3):
                 n = self.value[i1]

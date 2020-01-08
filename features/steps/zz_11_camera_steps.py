@@ -8,6 +8,10 @@ valid_test_objects = ["hsize", "vsize","field_of_view", "c", "w"]
 parse_test_object = TypeBuilder.make_choice(valid_test_objects)
 register_type(TestObject=parse_test_object)
 
+valid_test_variables = ["up", "from", "to"]
+parse_test_variable = TypeBuilder.make_choice(valid_test_variables)
+register_type(TestVariable=parse_test_variable)
+
 valid_camera_elements = ["hsize", "vsize", "field_of_view", "transform", "pixel_size"]
 parse_camera_element = TypeBuilder.make_choice(valid_camera_elements)
 register_type(CameraElement=parse_camera_element)
@@ -28,6 +32,17 @@ def step_given_object_value(context, item, value_num, value_denom):
     value_denom = float(value_denom)
     context.dict[str(item)] = (value_num / value_denom)
 
+@given("{item:TestVariable} ← point({x:g}, {y:g}, {z})")
+def step_given_object_point_value(context, item, x, y, z):
+    try:
+        if (context.tuple is None):
+            context.tuple = {}
+    except:
+        context.tuple = {}
+    print("assigned ", item, context.tuple[str(item)])
+    context.tuple[str(item)] = base.point(float(x), float(y), float(z))
+
+
 
 @given("{item:TestObject} ← {value:g}")
 def step_given_object_value(context, item, value):
@@ -37,8 +52,32 @@ def step_given_object_value(context, item, value):
     except:
         context.dict = {}
     context.dict[str(item)] = float(value)
+
+
+@given("{item:TestObject} ← camera({hsize:g}, {vsize:g}, {fov_numerator}/{fov_denominator:g})")
+def step_given_create_camera(context, item, hsize, vsize, fov_numerator, fov_denominator):
+    fov_numerator = np.pi if fov_numerator=="π" else float(fov_numerator)
+    try:
+        if (context.dict is None):
+            context.dict = {}
+    except:
+        context.dict = {}
+    context.dict[item] = base.camera(float(hsize), float(vsize), (fov_numerator/float(fov_denominator)))
+
+
+@given("{item:TestObject}.transform ← view_transform({ofrom:TestVariable}, {to:TestVariable}, {up:TestVariable})")
+def step_given_camera_transform_value(context, item, ofrom, to, up):
+    assert(ofrom in context.tuple.keys())
+    assert(to in context.tuple.keys())
+    assert(up in context.tuple.keys())
+    context.dict[str(item)].set_transform(base.view_transform(context.tuple[str(ofrom)],
+                                                              context.tuple[str(to)],
+                                                              context.tuple[str(up)]))
     
+
+
     
+
 @when("{item:TestObject} ← camera({hsize:TestObject}, {vsize:TestObject}, {fov:TestObject})")
 def step_when_create_camera(context, item, hsize, vsize, fov):
     context.dict[item] = base.camera(context.dict[str(hsize)],
@@ -46,152 +85,80 @@ def step_when_create_camera(context, item, hsize, vsize, fov):
                                          context.dict[str(fov)])
     
 
-
-
-
-
-
-
-
-
-
-
-@given("{item:TestObject} ← intersection({time:g}, {thing:TestSolid})")
-def step_intersection_create_given(context, item, time, thing):
+@when("{item:TestRay} ← ray_for_pixel({camera:TestObject}, {x:g}, {y:g})")
+def step_when_create_ray_for_pixel(context, item, camera, x, y):
     try:
         if (context.dict is None):
             context.dict = {}
     except:
         context.dict = {}
-    context.dict[item] = base.intersection(float(time), context.dict[str(thing)])
+    context.dict[item] = base.ray_for_pixel(context.dict[str(camera)], float(x), float(y))
+
+
+@when("{item:TestObject}.{element:CameraElement} ← rotation_y({rot_num}/{rot_denom:g}) * translation({x}, {y}, {z})")
+def step_camera_element_has_transform_value(context, item, element, rot_num, rot_denom, x, y, z):
+    assert(item in context.dict.keys())
+    rot_num = np.pi if rot_num=="π" else float(rot_num)
+    rot_denom = float(rot_denom)
+    context.dict[str(item)].set_transform(np.matmul(base.rotation_y(rot_num/rot_denom), base.translation(float(x), float(y), float(z))))
 
 
 
-@given("{item1:ListName} ← intersections({item2:TestObject}, {item3:TestObject})")
-def step_intersection_list_concatenate_given(context, item1, item2, item3):
-    assert(item2 in context.dict.keys())
-    assert(item3 in context.dict.keys())
-    context.dict[item1] = base.intersections(context.dict[str(item2)], context.dict[str(item3)])
-
-
-@given("{item1:ListName} ← intersections({item2:TestObject}, {item3:TestObject}, {item4:TestObject}, {item5:TestObject})")
-def step_intersection_list_concatenate_given(context, item1, item2, item3, item4, item5):
-    assert(item2 in context.dict.keys())
-    assert(item3 in context.dict.keys())
-    assert(item4 in context.dict.keys())
-    assert(item5 in context.dict.keys())
-    context.dict[item1] = base.intersections(context.dict[str(item2)], context.dict[str(item3)], context.dict[str(item4)], context.dict[str(item5)])
-
-
-
-
-@when("{item:TestObject} ← prepare_computations({intersect:TestObject}, {ray:TestRay})")
-def step_intersection_create_when(context, item, intersect, ray):
+@when("image ← render({camera:TestObject}, {world:TestObject})")
+def step_when_render_world(context, camera, world):
     try:
         if (context.dict is None):
             context.dict = {}
     except:
         context.dict = {}
-    context.dict[str(item)] = base.prepare_computations(context.dict[str(intersect)], context.dict[str(ray)])
+    context.dict["image"] = base.render(context.dict[str(camera)], context.dict[str(world)])
 
 
 
-@when("{item1:ListName} ← intersections({item2:TestObject}, {item3:TestObject})")
-def step_intersection_list_concatenate_when(context, item1, item2, item3):
-    assert(item2 in context.dict.keys())
-    assert(item3 in context.dict.keys())
-    context.dict[item1] = base.intersections(context.dict[str(item2)], context.dict[str(item3)])
 
-
-@when("{item:TestObject} ← hit({list:ListName})")
-def step_find_hit_in_intersection_list(context, item, list):
-    assert(list in context.dict.keys())
-    context.dict[str(item)] = base.hit(context.dict[str(list)])
-
-
-
-@then("{item1:TestObject} is nothing")
-def step_hit_in_intersections_list_is_nothing(context, item1):
-    assert (item1 in context.dict.keys())
-    item1_object = context.dict[str(item1)]
-    assert (item1_object == None)
-
-
-
-@then("{item:TestObject}.{element:CompsElement} = false")
-def step_comps_contains_element_value(context, item, element):
-    assert(item in context.dict.keys())
-    comps_object_str = "context.dict['"+str(item)+"']."+str(element)
-    comps_object_element = eval(comps_object_str)
-    assert(base.equal(comps_object_element, False))
-
-
-
-@then("{item:TestObject}.{element:CompsElement} = true")
-def step_comps_contains_element_value(context, item, element):
-    assert(item in context.dict.keys())
-    comps_object_str = "context.dict['"+str(item)+"']."+str(element)
-    comps_object_element = eval(comps_object_str)
-    assert(base.equal(comps_object_element, True))
-
-
-@then("{item:TestObject}.{element:IntersectionElement} = {value:g}")
-def step_intersection_contains_element(context, item, element, value):
+@then("{item:TestObject}.{element:CameraElement} = {numerator}/{denominator:g}")
+def step_camera_element_has_rational_value(context, item, element, numerator, denominator):
     assert(item in context.dict.keys())
     local_object_str = "context.dict['"+str(item)+"']."+str(element)
-    intersection_object = eval(local_object_str)
+    camera_object_element = eval(local_object_str)
+    numerator = np.pi if numerator=="π" else float(numerator)
+    test_value = numerator/float(denominator)
+    assert(base.equal(camera_object_element, test_value))
+    
+    
+@then("{item:TestObject}.{element:CameraElement} = {value:g}")
+def step_camera_element_has_value(context, item, element, value):
+    assert(item in context.dict.keys())
+    local_object_str = "context.dict['"+str(item)+"']."+str(element)
+    camera_object_element = eval(local_object_str)
     test_value = float(value)
-    assert(base.equal(intersection_object, test_value))
+    assert(base.equal(camera_object_element, test_value))
 
-
-
-@then("{item:TestObject}.{element:IntersectionElement} = {value:TestSolid}")
-def step_intersection_contains_element(context, item, element, value):
+@then("{item:TestObject}.{element:CameraElement} = identity_matrix")
+def step_camera_element_has_value_identity(context, item, element):
     assert(item in context.dict.keys())
     local_object_str = "context.dict['"+str(item)+"']."+str(element)
-    intersection_object = eval(local_object_str)
-    test_value = context.dict[str(value)]
-    assert(intersection_object == test_value)
+    camera_object_element = eval(local_object_str)
+    test_value = np.identity(4, dtype=float)
+    assert(base.equal(camera_object_element, test_value))
 
 
-@then("{item1:TestObject}.{element1:CompsElement} = point({x:g}, {y:g}, {z:g})")
-def step_comps_contains_element_A(context, item1, element1, x, y, z):
-    assert (item1 in context.dict.keys())
-    
-    comps_object_str = "context.dict['" + str(item1) + "']." + str(element1)
-    comps_object_element = eval(comps_object_str)
-    point_value = base.point(float(x), float(y), float(z))
-    assert (base.equal(comps_object_element, point_value))
+@then("{item:TestRay}.{element:RayElement} = point({x}, {y}, {z})")
+def step_ray_element_has_value(context, item, element, x, y, z):
+    assert(item in context.dict.keys())
+    comps_object_element = context.dict[str(item)].__dict__[str(element)]
+    test_value = base.point(float(x), float(y), float(z))
+    assert(base.equal(comps_object_element, test_value))
 
 
-@then("{item1:TestObject}.{element1:CompsElement} = vector({x:g}, {y:g}, -{z:g})")
-def step_comps_contains_element_B(context, item1, element1, x, y, z):
-    assert (item1 in context.dict.keys())
-    
-    comps_object_str = "context.dict['" + str(item1) + "']." + str(element1)
-    comps_object_element = eval(comps_object_str)
-    point_value = base.vector(float(x), float(y), -float(z))
-    assert (base.equal(comps_object_element, point_value))
+@then("pixel_at(image, {x:g}, {y:g}) = color({red:g}, {green:g}, {blue:g})")
+def step_ray_element_has_value(context, x, y, red, green, blue):
+    assert("image" in context.dict.keys())
+    test_value = base.pixel_at(context.dict["image"], int(x), int(y))
+    test_color = base.color(float(red), float(green), float(blue))
+    assert(base.equal(test_value, test_color))
 
 
-@then("{item1:TestObject}.{element1:CompsElement} = {item2:TestObject}.{element2:IntersectionElement}")
-def step_comps_contains_element_C(context, item1, element1, item2, element2):
-    assert(item1 in context.dict.keys())
-    assert(item2 in context.dict.keys())
-    comps_object_str = "context.dict['"+str(item1)+"']."+str(element1)
-    comps_object_element = eval(comps_object_str)
-    intersection_object_str = "context.dict['"+str(item2)+"']."+str(element2)
-    intersection_object_element = eval(intersection_object_str)
-    assert(comps_object_element == intersection_object_element)
 
 
-@then("{item1:TestObject} = {item2:TestObject}")
-def step_intersections_are_equivalent_then(context, item1, item2):
-    assert (item1 in context.dict.keys())
-    assert (item2 in context.dict.keys())
-    item1_object_str = "context.dict['" + str(item1) + "']"
-    item1_object = eval(item1_object_str)
-    item2_object_str = "context.dict['" + str(item2) + "']"
-    item2_object = eval(item2_object_str)
-    assert (item1_object == item2_object)
 

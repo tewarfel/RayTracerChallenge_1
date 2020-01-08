@@ -110,7 +110,6 @@ def step_given_item_added_to_world(context, item, world):
     assert(item in context.dict.keys())
     assert(world in context.dict.keys())
     context.dict[str(world)].objects.append(context.dict[str(item)])
-    print(context.dict[str(world)].objects)
     
 
 @given("{item:TestObject} ← sphere() with translation({x}, {y}, {z})")
@@ -163,7 +162,7 @@ def step_default_world_create(context, item):
 
 @given("{item:TestRay} ← ray(point({px}, {py}, {pz}), vector({vx}, {vy}, {vz}))")
 def step_impl_generic_ray_full(context, item, px, py, pz, vx, vy, vz):
-    print("in ray definition")
+
     pt = base.point(float(px), float(py), float(pz))
     vc = base.vector(float(vx), float(vy), float(vz))
     try:
@@ -172,7 +171,7 @@ def step_impl_generic_ray_full(context, item, px, py, pz, vx, vy, vz):
     except:
         context.dict = {}
     context.dict[str(item)] = base.ray(pt, vc)
-    print("ray is ", context.dict[str(item)].__dict__)
+
 
 
 
@@ -196,8 +195,6 @@ def step_intersect_world_ray(context, item, w, r):
     except:
         context.dict = {}
     test_ray = context.dict[str(r)]
-    print(test_ray.__dict__)
-    print(context.dict[str(w)].__dict__)
     context.dict[str(item)] = base.intersect_world(context.dict[str(w)], context.dict[str(r)])
 
 
@@ -223,7 +220,6 @@ def step_shade_hit_world(context, item, w, r):
     world_object = context.dict[str(w)]
     ray_object = context.dict[str(r)]
     resulting_color = base.color_at(world_object, ray_object)
-    print("color_at result is ", resulting_color)
     context.tuple[str(item)] = resulting_color
 
 
@@ -454,8 +450,6 @@ def step_lighting_color_test(context, item, red, green, blue):
     local_object_str = "context.tuple['"+str(item)+"']"
     local_object = eval(local_object_str)
     value = base.color(float(red), float(green), float(blue))
-    print("local object is ", local_object)
-    print(value)
     assert(base.equal(local_object, value))
 
 
@@ -465,6 +459,4 @@ def step_then_material_color_test(context, item1, item2):
     assert(item2 in context.dict.keys())
     local_color = context.tuple[str(item1)]
     material_color = context.dict[str(item2)].material.color
-    print("local color is ", local_color)
-    print(item2, " material color is ", material_color)
     assert(base.equal(local_color, material_color))

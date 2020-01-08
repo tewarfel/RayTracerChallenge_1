@@ -110,13 +110,23 @@ def step_impl_generic_ray_implied(context, ray2, ray1, m):
 
 
 
-@then("{item:TestRay}.{element:RayElement} = point({x}, {y}, {z})")
+@then("{item:TestRay}.{element:RayElement} = point({x:g}, {y:g}, {z:g})")
 def step_impl_ray_element_point(context, item, element, x, y, z):
+    assert(item in context.dict.keys())
+    assert(element in valid_ray_elements)
+    thing = context.dict[str(item)].__dict__[str(element)]
+    vec4_value = base.point(float(x), float(y), float(z))
+    assert(base.equal(thing, vec4_value))
+
+
+
+@then("{item:TestRay}.{element:RayElement} = vector(√{xnum}/{xdenom:g}, 0, -√{znum}/{zdenom:g})")
+def step_impl_ray_element_vector(context, item, element, xnum, xdenom, znum, zdenom):
     assert(item in context.dict.keys())
     assert(element in valid_ray_elements)
     ray = context.dict[str(item)]
     thing = eval("ray."+str(element))
-    vec4_value = base.point(float(x), float(y), float(z))
+    vec4_value = base.vector(np.sqrt(float(xnum))/float(xdenom), 0, -np.sqrt(float(znum))/float(zdenom))
     assert(base.equal(thing, vec4_value))
 
 

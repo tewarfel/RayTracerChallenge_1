@@ -40,6 +40,23 @@ valid_intersect_list_names = ["xs"]
 parse_intersect_list_name = TypeBuilder.make_choice(valid_intersect_list_names)
 register_type(ListName=parse_intersect_list_name)
 
+valid_material_elements = ["color", "ambient", "diffuse", "specular", "shininess", "reflective", "transparency", "refractive_index"]
+parse_material_element = TypeBuilder.make_choice(valid_material_elements)
+register_type(MaterialElement=parse_material_element)
+
+
+
+@given("{item:TestSolid} ← glass_sphere()")
+def step_impl_generic_glass_sphere(context, item):
+    try:
+        if (context.dict is None):
+            context.dict = {}
+    except:
+        context.dict = {}
+    context.dict[str(item)] = base.glass_sphere()
+
+
+
 @given("{item:TestMatrix} ← translation({x:g}, {y:g}, {z:g})")
 def step_impl_generic_translation_matrix(context, item, x, y, z):
     try:
@@ -201,14 +218,9 @@ def step_get_obj_normal_at_point(context, item, s, xnum, xdenom, ynum, ydenom, z
             context.tuple = {}
     except:
         context.tuple = {}
-    
     new_point = base.point(np.sqrt(float(xnum)) / float(xdenom), np.sqrt(float(ynum)) / float(ydenom), np.sqrt(float(znum)) / float(zdenom))
-    print("new point is ", new_point)
     test_solid = context.dict[str(s)]
-    print("solid is ", test_solid)
-    
     norm = base.normal_at(test_solid, new_point)
-    print("norm is ", norm)
     context.tuple[str(item)] = norm
 
 
@@ -223,12 +235,8 @@ def step_get_obj_normal_at_point(context, item, s, x, ynum, ydenom, znum, zdenom
     
     new_point = base.point(np.sqrt(float(x)), np.sqrt(float(ynum)) / float(ydenom),
                                -np.sqrt(float(znum)) / float(zdenom))
-    print("new point is ", new_point)
     test_solid = context.dict[str(s)]
-    print("solid is ", test_solid)
-    
     norm = base.normal_at(test_solid, new_point)
-    print("norm is ", norm)
     context.tuple[str(item)] = norm
 
 
@@ -243,12 +251,8 @@ def step_get_obj_normal_at_point(context, item, s, x, y, z):
         context.tuple = {}
     
     new_point = base.point(float(x), float(y), float(z))
-    print("new point is ", new_point)
     test_solid = context.dict[str(s)]
-    print("solid is ", test_solid)
-    
     norm = base.normal_at(test_solid, new_point)
-    print("norm is ", norm)
     context.tuple[str(item)] = norm
 
 
@@ -385,11 +389,7 @@ def step_test_normal_value3(context, item, item2):
     nval = context.tuple[str(item)]
     assert(item2 in context.tuple.keys())
     nval2 = context.tuple[str(item2)]
-    print("nval", nval)
-    print("nval2", nval2)
-    print("normalized nval2", base.normalize(nval2))
     assert(base.equal(nval, base.normalize(nval2)))
-    print("done")
 
 
 
@@ -398,8 +398,6 @@ def step_test_generic_material_then(context, item):
     assert(item in context.dict.keys())
     material1 = context.dict[item]
     material2 = base.material()
-    print(material1.__dict__)
-    print(material2.__dict__)
     assert(material1 == material2)
     
 
@@ -409,3 +407,10 @@ def step_then_object_material_value(context, item, item2):
     assert (item in context.dict.keys())
     assert (item2 in context.dict.keys())
     assert(context.dict[str(item)].material==context.dict[str(item2)])
+
+@then("{item:TestSolid}.material.{mchar:MaterialElement} = {value:g}")
+def step_then_solid_material_characteristic_is_value(context, item, mchar, value):
+    result = context.dict[str(item)].material.__dict__[str(mchar)]
+    test_value = float(value)
+    assert(base.equal(result, test_value))
+    
