@@ -5,6 +5,10 @@ cimport numpy as np
 DTYPE = np.float32
 ctypedef np.float32_t DTYPE_T
 
+#cython: linetrace=True
+#cython: language_level=3
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+
 
 cdef class MemBlock():
     cdef public np.ndarray block
@@ -21,8 +25,8 @@ cdef class MemBlock():
         self.vector_name = name
         self.freelist=np.ones((num_vectors), dtype=np.uint8)
         self.next_allocation = 0
-        print("\n** Creating MemBlock names ", name, " with ", num_vectors, " vectors, each ", vector_width, " floats wide.")
-        print()
+        #print("\n** Creating MemBlock names ", name, " with ", num_vectors, " vectors, each ", vector_width, " floats wide.")
+        #print()
         
     # this code is single-thread only
     cpdef public int allocate_vector(self):
@@ -158,7 +162,7 @@ class Vec4():
         other_type = type(other)
       #  print("in Vec4 __mul__, type of other is ", other_type)
 
-        if other_type==int or other_type==float or other_type==np.float32:
+        if (other_type in  (int, float, np.float32, np.float64)):
             return Vec4(Vec4.memblock.block[self.index, :] * other)
         elif other_type==Vec4:
             return Vec4(Vec4.memblock.block[self.index, :] *
@@ -172,7 +176,7 @@ class Vec4():
 
     def __rmul__(self, other):
         other_type = type(other)
-        if other_type==int or other_type==float or other_type==np.float32:
+        if (other_type in  (int, float, np.float32, np.float64)):
             return Vec4(Vec4.memblock.block[self.index, :] * other)
         elif other_type==Vec4:
             return Vec4(Vec4.memblock.block[self.index, :] *
@@ -185,7 +189,7 @@ class Vec4():
 
 
     def __truediv__(self, other):
-        if isinstance(other, (int, float)):
+        if isinstance(other, (int, float, np.float32, np.float64)):
             return Vec4(Vec4.memblock.block[self.index, :] * (1.0/other))
 
 
@@ -193,11 +197,13 @@ class Vec4():
         return Vec4(-Vec4.memblock.block[self.index, :])
 
     def __sub__(self, other):
-        if isinstance(other, (int, float)):
+        if isinstance(other, (int, float, np.float32, np.float64)):
             return Vec4(Vec4.memblock.block[self.index, :] - (other * np.ones((Vec4.memblock.width), dtype=np.float32)))
         else:
             return Vec4(Vec4.memblock.block[self.index, :] - Vec4.memblock.block[other.index, :])
 
+    def __len__(self):
+        return Vec4.memblock.width
 
     def mag_squared(self):
         return np.sum(Vec4.memblock.block[self.index, :] *
@@ -234,15 +240,15 @@ class Vec4():
         return Vec4.memblock.vector_name
 
 
-def point(DTYPE_T x, DTYPE_T y, DTYPE_T z):
+cpdef point(DTYPE_T x, DTYPE_T y, DTYPE_T z):
     return(Vec4(x, y, z, 1))
 
 
-def vector(DTYPE_T x, DTYPE_T y, DTYPE_T z):
+cpdef vector(DTYPE_T x, DTYPE_T y, DTYPE_T z):
     return(Vec4(x, y, z, 0))
 
 
-def is_vec4(k):
+cpdef is_vec4(k):
     try:
         if k.is_vec4():
             return True
@@ -252,14 +258,14 @@ def is_vec4(k):
         return False
 
 
-def is_point(k):
+cpdef is_point(k):
     if is_vec4(k):
         if int(k[3]) == 1:
             return True
     return False
 
 
-def is_vector(k):
+cpdef is_vector(k):
     if is_vec4(k):
         if k[3] == 0:
             return True
@@ -271,7 +277,7 @@ class Vec3():
     memblock = MemBlock(3, 512, "Vec3")
     
     def __init__(self, *args):
-        index = Vec3.memblock.allocate_vector()
+        cdef int index = Vec3.memblock.allocate_vector()
         self.index = index
 
         if len(args) == Vec3.memblock.width:
@@ -338,7 +344,7 @@ class Vec3():
     def __mul__(self, other):
         other_type = type(other)
         
-        if other_type == int or other_type == float or other_type==np.float32:
+        if (other_type in  (int, float, np.float32, np.float64)):
             return Vec3(Vec3.memblock.block[self.index, :] * other)
         elif other_type == Vec3:
             return Vec3(Vec3.memblock.block[self.index, :] *
@@ -351,7 +357,7 @@ class Vec3():
     
     def __rmul__(self, other):
         other_type = type(other)
-        if other_type == int or other_type == float:
+        if (other_type in  (int, float, np.float32, np.float64)):
             return Vec3(Vec3.memblock.block[self.index, :] * other)
         elif other_type == Vec3:
             return Vec3(Vec3.memblock.block[self.index, :] *
@@ -363,17 +369,29 @@ class Vec3():
             quit(1)
     
     def __truediv__(self, other):
-        if isinstance(other, (int, float)):
+        if isinstance(other, (int, float, np.float32, np.float64)):
             return Vec3(Vec3.memblock.block[self.index, :] * (1.0 / other))
     
     def __neg__(self):
         return Vec3(-Vec3.memblock.block[self.index, :])
     
+    def __eq__(self, other):
+        cdef int i
+        for i in range(3):
+            if Vec3.memblock.block[self.index, i] != Vec3.memblock.block[other.index, i]:
+                return False
+        return True
+    
     def __sub__(self, other):
-        if isinstance(other, (int, float)):
+        if isinstance(other, (int, float, np.float32, np.float64)):
             return Vec3(Vec3.memblock.block[self.index, :] - (other * np.ones((Vec3.memblock.width), dtype=np.float32)))
         else:
             return Vec3(Vec3.memblock.block[self.index, :] - Vec3.memblock.block[other.index, :])
+    
+    
+    def __len__(self):
+        return Vec3.memblock.width
+    
     
     def mag_squared(self):
         return np.sum(Vec3.memblock.block[self.index, :] *
@@ -393,7 +411,7 @@ class Vec3():
         return Vec3((sy * oz) - (sz * oy), (sz * ox) - (sx * oz), (sx * oy) - (sy * ox))
 
     def normalize(self):
-        m = self.magnitude()
+        cdef float m = self.magnitude()
         if m == 0:
             return Vec3(Vec3.memblock.block[self.index, :])
         else:

@@ -50,6 +50,12 @@ def step_impl_generic_solid_sphere(context, item):
     context.dict[str(item)] = sphere()
 
 
+@given("{item:TestObject} ← intersection(√{time:g}, {thing:TestSolid})")
+def step_intersection_create_given_with_sqrt(context, item, time, thing):
+    ensure_context_has_dict(context)
+    context.dict[item] = intersection(math.sqrt(float(time)), context.dict[str(thing)])
+
+
 @given("{item:TestObject} ← intersection({time:g}, {thing:TestSolid})")
 def step_intersection_create_given(context, item, time, thing):
     ensure_context_has_dict(context)
@@ -91,11 +97,23 @@ def step_intersection_create_when(context, item, intersect, ray):
     ensure_context_has_dict(context)
     context.dict[str(item)] = prepare_computations(context.dict[str(intersect)], context.dict[str(ray)])
 
-@when("{item:TestObject} ← prepare_computations({intersect:TestObject}, {ray:TestRay}, {intersection_list:ListName})")
+@when("{item:TestObject} ← prepare_computations({intersect:ListName}[0], {ray:TestRay}, {intersection_list:ListName})")
 def step_intersection_create_when_ver2(context, item, intersect, ray, intersection_list):
     ensure_context_has_dict(context)
-    context.dict[str(item)] = prepare_computations(context.dict[str(intersect)], context.dict[str(ray)], context.dict[str(intersection_list)])
+    context.dict[str(item)] = prepare_computations(context.dict[str(intersect)][0], context.dict[str(ray)], context.dict[str(intersection_list)])
 
+
+@when("{item:TestObject} ← prepare_computations({intersect:ListName}[1], {ray:TestRay}, {intersection_list:ListName})")
+def step_intersection_create_when_ver3(context, item, intersect, ray, intersection_list):
+    ensure_context_has_dict(context)
+    context.dict[str(item)] = prepare_computations(context.dict[str(intersect)][1], context.dict[str(ray)], context.dict[str(intersection_list)])
+
+
+
+@when("{item:TestObject} ← prepare_computations({intersect:TestObject}, {ray:TestRay}, {intersection_list:ListName})")
+def step_intersection_create_when_ver4(context, item, intersect, ray, intersection_list):
+    ensure_context_has_dict(context)
+    context.dict[str(item)] = prepare_computations(context.dict[str(intersect)], context.dict[str(ray)], context.dict[str(intersection_list)])
 
 
 

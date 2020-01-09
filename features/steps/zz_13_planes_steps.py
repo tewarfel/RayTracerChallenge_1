@@ -9,7 +9,7 @@ from base import render, translation, scaling, view_transform, world, camera, co
 from parse_type import TypeBuilder
 from step_helper import *
 
-valid_test_planes = ["p"]
+valid_test_planes = ["p","shape", "lower", "upper"]
 parse_test_plane = TypeBuilder.make_choice(valid_test_planes)
 register_type(TestPlane=parse_test_plane)
 
@@ -33,6 +33,10 @@ valid_intersection_elements = ["t", "object"]
 parse_intersection_element = TypeBuilder.make_choice(valid_intersection_elements)
 register_type(IntersectionElement=parse_intersection_element)
 
+valid_reflective_values = ["0.5", "1"]
+parse_reflective_value = TypeBuilder.make_choice(valid_reflective_values)
+register_type(ReflectiveValue=parse_reflective_value)
+
 
 
 
@@ -40,6 +44,11 @@ register_type(IntersectionElement=parse_intersection_element)
 def step_impl_basic_plane(context, item):
     ensure_context_has_dict(context)
     context.dict[str(item)] = plane()
+
+@given("{item:TestPlane} ← plane() with material.reflective={reflect:ReflectiveValue} and transform=translation(0, {y}, 0)")
+def step_impl_conditioned_plane_A(context, item, reflect, y):
+    ensure_context_has_dict(context)
+    context.dict[str(item)] = plane(plane_material=material(reflective=float(reflect)), plane_transform=translation(0, float(y), 0))
 
 
 @when("{item_n:TestVariable} ← local_normal_at({item_plane:TestPlane}, point({x:g}, {y:g}, {z:g}))")

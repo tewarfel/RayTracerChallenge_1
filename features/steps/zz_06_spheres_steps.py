@@ -9,7 +9,7 @@ from base import render, translation, scaling, view_transform, world, camera, co
 from parse_type import TypeBuilder
 from step_helper import *
 
-valid_test_solids = ["s", "s2", "shape"]
+valid_test_solids = ["s", "s2", "s3", "shape"]
 parse_test_solid = TypeBuilder.make_choice(valid_test_solids)
 register_type(TestSolid=parse_test_solid)
 
@@ -66,12 +66,10 @@ def step_impl_generic_translation_matrix(context, item, x, y, z):
 
 @given("{item:TestRay} ← ray(point({px}, {py}, {pz}), vector({vx}, {vy}, {vz}))")
 def step_impl_generic_ray_full(context, item, px, py, pz, vx, vy, vz):
-    print("in ray definition")
     pt = point(float(px), float(py), float(pz))
     vc = vector(float(vx), float(vy), float(vz))
     ensure_context_has_dict(context)
     context.dict[str(item)] = ray(pt, vc)
-    print("ray is ", context.dict[str(item)].__dict__)
 
 
 @given("{item:TestSolid} ← sphere()")
@@ -268,12 +266,12 @@ def step_impl_eval_ray_position(context, item, t, x, y, z):
     assert (equal(ray_position, test_point))
 
 
-@then("{listname:ListName}.count = {value:g}")
-def step_impl_ray_intersect_list_count(context, listname, value):
-    assert(listname in context.dict.keys())
-    listlen = len(context.dict[str(listname)])
-    count_value = float(value)
-    assert(equal(listlen, count_value))
+#@then("{listname:ListName}.count = {value:g}")
+#def step_impl_ray_intersect_list_count(context, listname, value):
+#    assert(listname in context.dict.keys())
+#    listlen = len(context.dict[str(listname)])
+#    count_value = int(value)
+#    assert(equal(listlen, count_value))
 
 
 @then("{listname:ListName}[{element:g}].t = {value:g}")
@@ -332,18 +330,15 @@ def step_get_obj_normal_at_point(context, item, xnum, xdenom, ynum, ydenom, znum
     assert(item in context.tuple.keys())
     value = context.tuple[str(item)]
     new_vector = vector(np.sqrt(float(xnum)) / float(xdenom), np.sqrt(float(ynum)) / float(ydenom), np.sqrt(float(znum)) / float(zdenom))
-    print("new vector is ", new_vector)
     assert(equal(value, new_vector))
    
-   
 
-
-@then("{item:TestVariable} = vector({x}, {y}, {z})")
-def step_test_normal_value2(context, item, x, y, z):
-    new_vector = vector(float(x), float(y), float(z))
-    assert(item in context.tuple.keys())
-    nval = context.tuple[str(item)]
-    assert(equal(nval, new_vector))
+#@then("{item:TestVariable} = vector({x}, {y}, {z})")
+#def step_test_normal_value2(context, item, x, y, z):
+#    new_vector = vector(float(x), float(y), float(z))
+#    assert(item in context.tuple.keys())
+#    nval = context.tuple[str(item)]
+#    assert(equal(nval, new_vector))
 
 
 @then("{item:TestVariable} = normalize({item2:TestVariable})")
@@ -359,7 +354,7 @@ def step_test_normal_value3(context, item, item2):
 @then("{item:TestObject} = material()")
 def step_test_generic_material_then(context, item):
     assert(item in context.dict.keys())
-    material1 = context.dict[item]
+    material1 = context.dict[str(item)]
     material2 = material()
     assert(material1 == material2)
     

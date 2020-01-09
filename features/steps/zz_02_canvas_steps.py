@@ -1,8 +1,6 @@
 from behave import *
 from hamcrest import assert_that, equal_to
-import base
 from parse_type import TypeBuilder
-import numpy as np
 from step_helper import *
 
 
@@ -22,7 +20,7 @@ register_type(CanvasComponent=parse_valid_component)
 @given(u'{item:TestVariable} ← canvas({width:g}, {height:g})')
 def step_impl_generic_canvas(context, item, width, height):
     ensure_context_has_dict(context)
-    context.dict[item] = base.canvas(int(width), int(height))
+    context.dict[item] = canvas(int(width), int(height))
     
     
 @then("{item:TestVariable}.{part:CanvasComponent} = {value:g}")
@@ -46,14 +44,14 @@ def step_then_component_equals_value(context, item, r, g, b):
 @given("{item:TestVariable} ← color({x:g}, {y:g}, {z:g})")
 def step_impl_color(context, item, x, y, z):
     ensure_context_has_dict(context)
-    context.dict[item] = base.Vec3(float(x), float(y), float(z))
+    context.dict[item] = Vec3(float(x), float(y), float(z))
 
 
 @when("write_pixel({item:TestVariable}, {x:g}, {y:g}, {color_var})")
 def step_impl_when_write_pixel(context, item, x, y, color_var):
     assert(item in context.dict)
     assert(color_var in context.dict)
-    base.write_pixel(context.dict[item], x, y, context.dict[color_var])
+    write_pixel(context.dict[item], x, y, context.dict[color_var])
 
 
 @then("pixel_at({item:TestVariable}, {x:g}, {y:g}) = {color_var}")

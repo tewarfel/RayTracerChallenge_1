@@ -32,7 +32,6 @@ def step_given_object_value(context, item, value_num, value_denom):
 @given("{item:TestVariable} ← point({x:g}, {y:g}, {z})")
 def step_given_object_point_value(context, item, x, y, z):
     ensure_context_has_tuple(context)
-    print("assigned ", item, context.tuple[str(item)])
     context.tuple[str(item)] = base.point(float(x), float(y), float(z))
 
 

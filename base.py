@@ -71,18 +71,18 @@ def equal(a, b):
     
 
     if isinstance(a, int):
-        a = float(a)
+        a = np.float32(a)
         
     if isinstance(b, int):
-        b = float(b)
+        b = np.float32(b)
         
-    if isinstance(a,float) and isinstance(b,float):
+    if isinstance(a,(float, np.float32, np.float64)) and \
+          isinstance(b,(float, np.float32, np.float64)):
         delta = (a - b) if a>b else (b - a)
         return True if delta < EPSILON else False
      
-    elif ((str(type(a)) == "<class 'vec4.Vec4'>") and (str(type(b)) == "<class 'vec4.Vec4'>") or
-          (str(type(a)) == "<class 'vec3.Vec3'>") and (str(type(b)) == "<class 'vec3.Vec3'>")):
-
+    elif ((str(type(a)) == "<class 'memblock.Vec4'>") and (str(type(b)) == "<class 'memblock.Vec4'>") or
+          (str(type(a)) == "<class 'memblock.Vec3'>") and (str(type(b)) == "<class 'memblock.Vec3'>")):
         for i1 in range(len(a)):
             n = a[i1]
             m = b[i1]
@@ -359,6 +359,7 @@ class Stripe_Pattern(Pattern):
     def __init__(self, color1, color2, transform=None):
         have_error = False
         if not is_vec3(color1):
+            print("in Stripe_Pattern, color1 is not Vec3: ", color1)
             have_error = True
         if not is_vec3(color2):
             have_error = True
@@ -411,7 +412,7 @@ class Gradient_Pattern(Pattern):
         if not is_point(pt):
             print("in Gradient_Pattern::color, pt is not a point: ", pt)
             assert (False)
-        return self.a + (self.range * (pt.x - math.floor(pt.x)))
+        return self.a + (self.range * np.float32(pt.x - math.floor(pt.x)))
     
     
 def gradient_pattern(color1, color2, transform=None):
@@ -692,13 +693,16 @@ def reflected_color(a_world, comps, remaining):
 def refracted_color(a_world, comps, remaining):
     if comps.object.material.transparency == 0:
         return black
+    if remaining < 1:
+        return black
     n_ratio = np.float32(comps.n1 / comps.n2)
     cos_i = dot(comps.eye_vector, comps.normal_vector)
-    sin2_t = (n_ratio * n_ratio) * np.float32(1 - (cos_i * cos_i))
+    sin2_t = (n_ratio * n_ratio) * (1 - (cos_i * cos_i))
     if sin2_t > 1:
         return black
     
     cos_t = np.float32(math.sqrt(1.0 - sin2_t))
+    sin2_t = np.float32(sin2_t)
     
     # direction of the refracted ray
     direction_vector = comps.normal_vector * (n_ratio * cos_i - cos_t) - (comps.eye_vector * n_ratio)

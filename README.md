@@ -8,7 +8,7 @@ I am using the python Behave module (a cucumber-like module for Python) to imple
 
 ## Overview
 This is a second-pass implementation of the functions / structures using Python3 and a little bit of Cython
-covering content through the end of chapter 11, and tests through chapter 10.
+covering content through mid chapter 14, including tests up through the groups.features tests.
 Gherkin feature test code has been modified to simplify parsing of matrix and element definitions 
 to use this implementation; some tests that pass are ahead of chapter 8 and I have
 left them in feature files.  Other tests included in the publisher-provided Gherkin .feature files from
@@ -25,8 +25,10 @@ This is single-threaded, non-thread-safe code.
 
 
 ## Methods
-The Vec3 and Vec4 object classes had been augmented to track both total references used, as well 
-as maximum references in use.  I've since replaced them with 
+The Vec3 and Vec4 object classes were initially implemented in straight python, and were augmented to track both total 
+number of vectors used during execution, as well as maximum references actually used during execution.
+These have both been replaced by a short Cython module called "memblock" and greatly reduces the overhead that had
+been consumed by namedtuple().
 
 For the "putting it together" example (end of chapter 7) with shadow addition (from chapter 8),
 I rendered the scene onto a 100 pixel wide by 50 pixel tall canvas.

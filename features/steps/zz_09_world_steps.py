@@ -9,11 +9,11 @@ from parse_type import TypeBuilder
 from step_helper import *
 
 
-valid_test_objects = ["w", "s1", "s2", "light", "shape", "i", "comps", "outer", "inner"]
+valid_test_objects = ["w", "s1", "s2", "light", "shape", "i", "comps", "outer", "inner", "lower", "upper", "s1"]
 parse_test_object = TypeBuilder.make_choice(valid_test_objects)
 register_type(TestObject=parse_test_object)
 
-valid_test_variables = ["intensity", "position", "eyev", "normalv", "result", "c", "p"]
+valid_test_variables = ["intensity", "position", "eyev", "normalv", "result", "c", "p", "color"]
 parse_test_variable = TypeBuilder.make_choice(valid_test_variables)
 register_type(TestVariable=parse_test_variable)
 
@@ -45,6 +45,11 @@ def step_world_create(context, item):
     ensure_context_has_dict(context)
     context.dict[item] = world()
 
+@given("{item1:TestObject} is added to {item2:TestObject}")
+def step_world_create(context, item1, item2):
+    assert(item1 in context.dict.keys())
+    context.dict[str(item2)].objects.append(context.dict[str(item1)])
+
 
 
 
@@ -73,8 +78,8 @@ def step_world_item_material_ambient_one(context, item):
 def step_impl_point_light_for_materials(context, item, px, py, pz, red, green, blue):
     ensure_context_has_dict(context)
 
-    real_position = point(float(px), float(py), float(pz))
-    real_intensity = color(float(red), float(green), float(blue))
+    real_position = point(np.float32(px), np.float32(py), np.float32(pz))
+    real_intensity = color(np.float32(red), np.float32(green), np.float32(blue))
     context.dict[item] = point_light(real_position, real_intensity)
 
 
@@ -82,8 +87,8 @@ def step_impl_point_light_for_materials(context, item, px, py, pz, red, green, b
 def step_impl_point_light_for_world(context, item, px, py, pz, red, green, blue):
     ensure_context_has_dict(context)
 
-    real_position = point(float(px), float(py), float(pz))
-    real_intensity = color(float(red), float(green), float(blue))
+    real_position = point(np.float32(px), np.float32(py), np.float32(pz))
+    real_intensity = color(np.float32(red), np.float32(green), np.float32(blue))
     context.dict[item].light = [point_light(real_position, real_intensity)]
 
 
@@ -103,12 +108,12 @@ def step_given_item_added_to_world(context, item, world):
 @given("{item:TestObject} ← sphere() with translation({x}, {y}, {z})")
 def step_given_s_is_sphere_with_translation(context, item, x, y, z):
     ensure_context_has_dict(context)
-    context.dict[str(item)] = sphere(sphere_transform=translation(float(x), float(y), float(z)))
+    context.dict[str(item)] = sphere(sphere_transform=translation(np.float32(x), np.float32(y), np.float32(z)))
 
 
 @given("{item:TestObject} ← sphere(sphere_material=material(material_color=({red}, {green}, {blue}), diffuse={d}, specular={sp}))")
 def step_impl_sphere_with_material(context, item, red, green, blue, d, sp):
-    the_material_color = color(float(red), float(green), float(blue))
+    the_material_color = color(np.float32(red), np.float32(green), np.float32(blue))
     new_material = material(material_color=the_material_color, diffuse=float(d), specular=float(sp))
     new_sphere = sphere(sphere_material=new_material)
     ensure_context_has_dict(context)
@@ -117,7 +122,7 @@ def step_impl_sphere_with_material(context, item, red, green, blue, d, sp):
 
 @given("{item:TestObject} ← sphere(sphere_transform=transform(scaling({x}, {y}, {z})))")
 def step_impl_sphere_with_transform(context, item, x, y, z):
-    new_transform = scaling(float(x), float(y), float(z))
+    new_transform = scaling(np.float32(x), np.float32(y), np.float32(z))
     new_sphere = sphere(sphere_transform=new_transform)
     ensure_context_has_dict(context)
     context.dict[str(item)] = new_sphere
@@ -130,18 +135,37 @@ def step_default_world_create(context, item):
     context.dict[item] = default_world()
 
 
+@given("{listitem:ListName} ← intersections(-√{t1:g}/{t1denom:g}:{s1:TestObject}, √{t2:g}/{t2denom:g}:{s2:TestObject})")
+def step_create_intersection_list1(context, listitem, t1, t1denom, s1, t2, t2denom, s2):
+    assert(s1 in context.dict.keys())
+    assert(s2 in context.dict.keys())
+    context.dict[str(listitem)] = intersections(intersection(np.float32(-math.sqrt(t1))/np.float32(t1denom), context.dict[str(s1)]),
+                                                intersection(np.float32(math.sqrt(t2))/np.float32(t2denom), context.dict[str(s2)]))
+
+
+
+
+@given("{listitem:ListName} ← intersections({t1:g}:{s1:TestObject}, {t2:g}:{s2:TestObject})")
+def step_create_intersection_list2(context, listitem, t1, s1, t2, s2):
+    assert(s1 in context.dict.keys())
+    assert(s2 in context.dict.keys())
+    context.dict[str(listitem)] = intersections(intersection(np.float32(t1), context.dict[str(s1)]),
+                                                intersection(np.float32(t2), context.dict[str(s2)]))
+
 
 
 @given("{item:TestRay} ← ray(point({px}, {py}, {pz}), vector({vx}, {vy}, {vz}))")
 def step_impl_generic_ray_full(context, item, px, py, pz, vx, vy, vz):
-
-    pt = point(float(px), float(py), float(pz))
-    vc = vector(float(vx), float(vy), float(vz))
+    pt = point(np.float32(px), np.float32(py), np.float32(pz))
+    vc = vector(np.float32(vx), np.float32(vy), np.float32(vz))
     ensure_context_has_dict(context)
     context.dict[str(item)] = ray(pt, vc)
 
 
-
+@given("{item:TestObject} has material.transparency={trans:g}, material.refractive_index={ri:g}")
+def step_impl_material_characteristics_2(context, item, trans, ri):
+    context.dict[str(item)].material.transparency=np.float32(trans)
+    context.dict[str(item)].material.refractive_index=np.float32(ri)
 
 
 @when("{item:TestObject} ← default_world()")
@@ -171,7 +195,37 @@ def step_shade_hit_world(context, item, w, r):
     ensure_context_has_tuple(context)
     world_object = context.dict[str(w)]
     ray_object = context.dict[str(r)]
-    resulting_color = color_at(world_object, ray_object)
+    resulting_color = color_at(world_object, ray_object, 5)
+    context.tuple[str(item)] = resulting_color
+
+
+
+@when("{item:TestVariable} ← reflected_color({w:TestObject}, {o:TestObject}, 0)")
+def step_reflected_color_world_with_depth_zero(context, item, w, o):
+    ensure_context_has_tuple(context)
+    world_object = context.dict[str(w)]
+    comps_object = context.dict[str(o)]
+    resulting_color = reflected_color(world_object, comps_object, 0)
+    context.tuple[str(item)] = resulting_color
+
+
+
+
+@when("{item:TestVariable} ← reflected_color({w:TestObject}, {o:TestObject})")
+def step_reflected_color_world(context, item, w, o):
+    ensure_context_has_tuple(context)
+    world_object = context.dict[str(w)]
+    comps_object = context.dict[str(o)]
+    resulting_color = reflected_color(world_object, comps_object, 5)
+    context.tuple[str(item)] = resulting_color
+
+
+@when("{item:TestVariable} ← refracted_color({w:TestObject}, {o:TestObject}, {remaining:g})")
+def step_refracted_color_world(context, item, w, o, remaining):
+    ensure_context_has_tuple(context)
+    world_object = context.dict[str(w)]
+    comps_object = context.dict[str(o)]
+    resulting_color = refracted_color(world_object, comps_object, int(remaining))
     context.tuple[str(item)] = resulting_color
 
 
@@ -211,12 +265,10 @@ def step_default_world_contains_object(context, item, item2):
             else:
                 match_found = False
                 break
-   
         if match_found and equal(thing.transform, test_object.transform):
             break
         else:
             match_found = False
-            
     assert(match_found)
 
 
@@ -239,6 +291,16 @@ def step_then_is_shadowed_is_false(context, item1, item2):
     point_object = context.tuple[str(item2)]
     result = is_shadowed(world_object, point_object)
     assert(result == True)
+
+
+@then("color_at({item1:TestObject}, {item2:TestRay}) should terminate successfully")
+def step_then_terminates_successfully(context, item1, item2):
+    assert(item1 in context.dict.keys())
+    assert(item2 in context.dict.keys())
+    world_object = context.dict[str(item1)]
+    ray_object = context.dict[str(item2)]
+    result = color_at(world_object, ray_object, 5)
+    assert(result is not None)
 
 
 
@@ -276,7 +338,7 @@ def step_default_world_first_object(context, item, item2):
 @given("{item:TestVariable} ← point({x:g}, {y:g}, {z:g})")
 def step_impl_point_assign_B(context, item, x, y, z):
     ensure_context_has_tuple(context)
-    context.tuple[item] = point(float(x), float(y), float(z))
+    context.tuple[item] = point(np.float32(x), np.float32(y), np.float32(z))
 
 
 
@@ -291,26 +353,26 @@ def step_impl_logic_assign_true(context, item):
 @given("{item:TestVariable} ← vector({x:g}, √{ynum:g}/{ydenom:g}, -√{znum:g}/{zdenom:g})")
 def step_impl_vector_assign_B(context, item, x, ynum, ydenom, znum, zdenom):
     ensure_context_has_tuple(context)
-    context.tuple[item] = vector(float(x), np.sqrt(float(ynum)) / float(ydenom), -np.sqrt(float(znum)) / float(zdenom))
+    context.tuple[item] = vector(np.float32(x), np.sqrt(np.float32(ynum)) / np.float32(ydenom), -np.sqrt(np.float32(znum)) / np.float32(zdenom))
     
 
 @given("{item:TestVariable} ← vector({x:g}, {y:g}, -{z:g})")
 def step_impl_vector_assign_C(context, item, x, y, z):
     ensure_context_has_tuple(context)
-    context.tuple[item] = vector(float(x), float(y), -float(z))
+    context.tuple[item] = vector(np.float32(x), np.float32(y), -np.float32(z))
 
 
 @given("{item:TestVariable} ← vector({x:g}, {y:g}, {z:g})")
 def step_impl_vector_assign_D(context, item, x, y, z):
     ensure_context_has_tuple(context)
-    context.tuple[item] = vector(float(x), float(y), float(z))
+    context.tuple[item] = vector(np.float32(x), np.float32(y), np.float32(z))
 
 
 @given("{item:TestVariable} ← vector({x:g}, -√{ynum:g}/{ydenom:g}, -√{znum:g}/{zdenom:g})")
 def step_impl_vector_assign_E(context, item, x, ynum, ydenom, znum, zdenom):
     ensure_context_has_tuple(context)
-    context.tuple[item] = vector(float(x), -np.sqrt(float(ynum)) / float(ydenom),
-                                          -np.sqrt(float(znum)) / float(zdenom))
+    context.tuple[item] = vector(np.float32(x), -np.sqrt(np.float32(ynum)) / np.float32(ydenom),
+                                          -np.sqrt(np.float32(znum)) / np.float32(zdenom))
 
 
 @given("{item:TestObject} ← material()")
@@ -363,7 +425,7 @@ def step_impl_ray_intersect_list_count(context, item, element, red, green, blue)
     assert(item in context.dict.keys())
     local_object_str = "context.dict['"+str(item)+"']."+str(element)
     local_object = eval(local_object_str)
-    value = color(float(red), float(green), float(blue))
+    value = color(np.float32(red), np.float32(green), np.float32(blue))
     assert(equal(local_object, value))
 
 
@@ -373,7 +435,7 @@ def step_lighting_color_test(context, item, red, green, blue):
     assert(item in context.tuple.keys())
     local_object_str = "context.tuple['"+str(item)+"']"
     local_object = eval(local_object_str)
-    value = color(float(red), float(green), float(blue))
+    value = color(np.float32(red), np.float32(green), np.float32(blue))
     assert(equal(local_object, value))
 
 

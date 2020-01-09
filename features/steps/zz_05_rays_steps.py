@@ -51,6 +51,22 @@ def step_impl_generic_scaling_matrix(context, item, x, y, z):
     context.dict[item] = base.scaling(float(x), float(y), float(z))
 
 
+@given("{item:TestRay} ← ray(point({px}, {py}, {pz}), vector({vx}, -√{vynum:g}/{vydenom:g}, √{vznum:g}/{vzdenom:g}))")
+def step_impl_generic_ray_full_with_sqrt(context, item, px, py, pz, vx, vynum, vydenom, vznum, vzdenom):
+    pt = base.point(float(px), float(py), float(pz))
+    vc = base.vector(float(vx), -math.sqrt(float(vynum))/float(vydenom), math.sqrt(float(vznum))/float(vzdenom))
+    ensure_context_has_dict(context)
+    context.dict[item] = base.ray(pt, vc)
+
+
+@given("{item:TestRay} ← ray(point(0, 0, √{pznum:g}/{pzdenom:g}), vector({vx}, {vy:g}, {vz:g}))")
+def step_impl_generic_ray_full_with_sqrt2(context, item, pznum, pzdenom, vx, vy, vz):
+    pt = base.point(np.float32(0), np.float32(0), np.float32(math.sqrt(float(pznum))/float(pzdenom)))
+    vc = base.vector(np.float32(vx), np.float32(vy), np.float32(vz))
+    ensure_context_has_dict(context)
+    context.dict[item] = base.ray(pt, vc)
+
+
 
 @given("{item:TestRay} ← ray(point({px}, {py}, {pz}), vector({vx}, {vy}, {vz}))")
 def step_impl_generic_ray_full(context, item, px, py, pz, vx, vy, vz):
@@ -59,7 +75,12 @@ def step_impl_generic_ray_full(context, item, px, py, pz, vx, vy, vz):
     ensure_context_has_dict(context)
     context.dict[item] = base.ray(pt, vc)
 
-
+@when("{item:TestRay} ← ray(point({px}, {py}, {pz}), vector({vx}, {vy}, {vz}))")
+def step_impl_generic_when_ray_full(context, item, px, py, pz, vx, vy, vz):
+    pt = base.point(float(px), float(py), float(pz))
+    vc = base.vector(float(vx), float(vy), float(vz))
+    ensure_context_has_dict(context)
+    context.dict[item] = base.ray(pt, vc)
 
 @when("{item:TestRay} ← ray({origin}, {direction})")
 def step_impl_generic_ray_implied(context, item, origin, direction):
