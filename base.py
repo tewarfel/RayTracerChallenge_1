@@ -6,10 +6,16 @@ import numpy as np
 #cython: linetrace=True
 #cython: language_level=3
 
-from vec4 import *
-from vec3 import *
+#from vec4 import *
+#from vec3 import *
+
+from memblock import *
+
 from rotations import *
 from canvas import *
+
+
+#from shape import material, Shape, Sphere, sphere, glass_sphere, set_transform, intersect, normal_at, reflect
 
 
 def magnitude(v):
@@ -20,33 +26,40 @@ def magnitude(v):
     
     
 def normalize(v):
-    if isinstance(v, (Vec4)):
-        mag = v.magnitude()
-        if mag == 0:
-            return(v)
-        else:
-            return (Vec4(v.x / mag, v.y / mag, v.z / mag, v.w))
-    else:
-        print("v was ", v)
-        print("v type is ", type(v))
-        assert(False)
+    return v.normalize()
+    
+#    if isinstance(v, (Vec4)):
+#        mag = v.magnitude()
+#        if mag == 0:
+#            return(v)
+#        else:
+#            return (Vec4(v.x / mag, v.y / mag, v.z / mag, v.w))
+#    else:
+#        print("v was ", v)
+#        print("v type is ", type(v))
+#        assert(False)
 
 
 def dot(a,b):
-    if isinstance(a, (Vec4)):
-        if isinstance(b, (Vec4)):
-            return a.dot_prod(b)
-    print("both parts of dot must be Vec4")
-    assert(False)
+    return(a.dot_prod(b))
+#    if isinstance(a, (Vec4)):
+#        if isinstance(b, (Vec4)):
+#            return a.dot_prod(b)
+#    print("both parts of dot must be Vec4")
+#    assert(False)
 
 
 def cross(a,b):
-    if isinstance(a, (Vec4)):
-        if isinstance(b, (Vec4)):
-            return a.cross_prod(b)
-    print("both parts of cross_product must be Vec4")
-    assert(False)
+    return(a.cross_prod(b))
+#    if isinstance(a, (Vec4)):
+#        if isinstance(b, (Vec4)):
+#            return a.cross_prod(b)
+#    print("both parts of cross_product must be Vec4")
+#    assert(False)
     
+
+def reflect(incoming, nml):
+    return incoming - (nml * 2 * dot(incoming, nml))
 
 
 EPSILON = 0.00005
@@ -245,10 +258,10 @@ class Ray(object):
  
     
     def transform(self, transformation_matrix):
-        new_origin = np.matmul(transformation_matrix, self.origin)
-        new_origin = Vec4(new_origin[0], new_origin[1], new_origin[2], new_origin[3])
-        new_direction = np.matmul(transformation_matrix, self.direction)
-        new_direction = Vec4(new_direction[0], new_direction[1], new_direction[2], new_direction[3])
+        [ox,oy,oz,ow]=self.origin
+        new_origin = Vec4(np.matmul(transformation_matrix, np.array([ox,oy,oz,ow],dtype=np.float32)))
+        [ox,oy,oz,ow] = self.direction
+        new_direction = Vec4(np.matmul(transformation_matrix, np.array([ox,oy,oz,ow], dtype=np.float32)))
         return Ray(new_origin, new_direction)
 
 
@@ -281,142 +294,14 @@ def intersection(t, object):
 
 
 
-class Material(object):
-    def __init__(self, material_color, ambient, diffuse, specular, shininess, reflective, transparency,
-                 refractive_index):
-        if type(material_color) == Vec3:
-           self.color = material_color
-        elif type(material_color) == tuple:
-           self.color = color(material_color[0], material_color[1], material_color[2])
-        else:
-            print("unknown color type ", material_color)
-            print(type(material_color))
-            quit(1)
-        self.ambient = ambient
-        self.diffuse = diffuse
-        self.specular = specular
-        self.shininess = shininess
-        self.reflective = reflective
-        self.transparency = transparency
-        self.refractive_index = refractive_index
-
-    def __eq__(self, other):
-        if type(other) != Material:
-            print("Error - can only compare a material to another material")
-            assert(False)
-        for element in self.__dict__.keys():
-            if self.__dict__[element] != other.__dict__[element]:
-                return False
-        return True
-
-
-def material(material_color=color(1.0, 1.0, 1.0), ambient=0.1, diffuse=0.9, specular=0.9, shininess=200.0,
-             reflective=0.0, transparency=0.0, refractive_index=1.0):
-    return Material(material_color, ambient, diffuse, specular, shininess, reflective, transparency, refractive_index)
-
-
-
-
-
-
-class Sphere(object):
-    scount = 0
-    
-    def __init__(self, sphere_material=None, sphere_transform=None):
-        self.origin = point(0, 0, 0)
-
-        Sphere.scount += 1
-        self.instance_id = Sphere.scount
-        if sphere_material is None:
-            self.material = material()
-        else:
-            self.material = sphere_material
-
-        if sphere_transform is None:
-            self.transform = np.identity(4, dtype=float)
-            self.inverse_transform = np.identity(4, dtype=float)
-        else:
-            self.transform = sphere_transform
-            self.inverse_transform = inverse(sphere_transform)
-        
-        
-    def intersect(self, src_ray):
-        ray2 = transform(src_ray, self.inverse_transform)
-        sphere_to_ray = ray2.origin - self.origin
-        a2 = 2 * dot(ray2.direction, ray2.direction)
-        b = 2 * dot(ray2.direction, sphere_to_ray)
-        c = dot(sphere_to_ray, sphere_to_ray) - 1
-        
-        discriminant = (b * b) - (2 * a2 * c)
-        if discriminant < 0:
-            return ()
-        else:
-            scale_value = 1.0 / a2
-            v = scale_value * np.sqrt(discriminant)
-            w = scale_value * b
-            t1 = -(v+w)
-            t2 = v-w
-            return(Intersection(t1, self), Intersection(t2, self))
-
-
-    def set_transform(self, t):
-        assert(t.shape == (4, 4))
-        self.transform = t
-        self.inverse_transform = inverse(t)
-        
-        
-    def normal_at(self, pt):
-        obj_point = np.matmul(self.inverse_transform, pt)
-        obj_nml = obj_point - point(0,0,0) # np.matmul(self.inverse_transform, self.origin)
-        wn = np.matmul(np.transpose(self.inverse_transform), obj_nml)
-        return normalize(vector(wn[0], wn[1], wn[2]))
-
-        
-def sphere(sphere_material = None, sphere_transform = None):
-    return Sphere(sphere_material, sphere_transform)
-
-def glass_sphere(sphere_material = material(transparency=1.0, refractive_index=1.5), sphere_transform = np.identity(4, dtype=float)):
-    return Sphere(sphere_material, sphere_transform)
-
-
-def set_transform(s, t):
-    s.set_transform(t)
-    
-
-def intersect(src_sphere, src_ray):
-    return src_sphere.intersect(src_ray)
-
-
-def normal_at(src_sphere, pt):
-    return src_sphere.normal_at(pt)
-
-
-
-
-def reflect(incoming, nml):
-    return incoming - (nml * 2 * dot(incoming, nml))
-
-
-
-class Point_Light(object):
-    #scount = 0
-    
-    def __init__(self, light_position, light_intensity):
-        self.position = light_position
-        self.intensity = light_intensity
-        
-       # Point_Light.scount += 1
-       # self.instance_id = Point_Light.scount
-        
- 
-def point_light(light_position, light_intensity):
-    return Point_Light(light_position, light_intensity)
-
 
 black = color(0, 0, 0)
 
-def lighting(material, light, point, eye_vec, normal_vec, in_shadow = False):
-    effective_color = material.color * light.intensity
+
+def lighting(material, object, light, point, eye_vec, normal_vec, in_shadow=False):
+    ""
+    current_color = material.pattern.pattern_at_shape(object, point) if material.pattern is not None else material.color
+    effective_color = current_color * light.intensity
     light_vec = normalize(light.position - point)
     ambient = effective_color * material.ambient
     diffuse = black
@@ -432,11 +317,159 @@ def lighting(material, light, point, eye_vec, normal_vec, in_shadow = False):
             if reflect_dot_eye > 0:
                 factor = math.pow(reflect_dot_eye, material.shininess)
                 specular = light.intensity * material.specular * factor
-        
+    
     return (ambient + diffuse + specular)
 
 
 
+
+class Pattern(object):
+    def __init__(self, transform=None):
+        if transform is None:
+            self.transform = np.identity(4, dtype=float)
+            self.inverse_transform = np.identity(4, dtype=float)
+        else:
+            self.transform = transform
+            self.inverse_transform = inverse(transform)
+
+
+    def pattern_at_shape(self, a_shape, a_world_pt):
+        if not is_point(a_world_pt):
+            print("in Pattern::pattern_at_shape, pt is not a point: ", a_world_pt)
+            assert(False)
+        [ox,oy,oz,ow]=a_world_pt
+        shape_pt = np.matmul(a_shape.inverse_transform, np.array([ox,oy,oz,ow], dtype=np.float32))
+        pattern_pt = np.matmul(self.inverse_transform, shape_pt)
+        return self.pattern_at(point(pattern_pt[0], pattern_pt[1], pattern_pt[2]))
+
+    # dummy pattern for tests
+    def pattern_at(self, pt):
+        return(color(pt.x, pt.y, pt.z))
+
+    def set_transform(self, t):
+        self.transform = t
+        self.inverse_transform = inverse(t)
+
+
+def test_pattern(transform=None):
+    return Pattern(transform)
+
+
+class Stripe_Pattern(Pattern):
+    def __init__(self, color1, color2, transform=None):
+        have_error = False
+        if not is_vec3(color1):
+            have_error = True
+        if not is_vec3(color2):
+            have_error = True
+            print("in Stripe_Pattern, color2 is not Vec3: ",color2)
+        if have_error:
+            assert(False)
+            
+        super().__init__(transform)
+        self.a = color1
+        self.b = color2
+
+    def pattern_at(self, pt):
+        if not is_point(pt):
+            print("in Stripe_Pattern::color, pt is not a point: ", pt)
+            assert(False)
+        return self.a if (math.floor(pt.x) % 2 == 0) else self.b
+      
+        
+def stripe_pattern(color1, color2, transform=None):
+    return Stripe_Pattern(color1, color2, transform)
+
+
+def stripe_at(a_pattern, a_pt):
+    return a_pattern.stripe_at(a_pt)
+
+
+def stripe_at_object(a_pattern, an_object, a_world_point):
+    object_pt = np.matmul(an_object.inverse_transform, a_world_point)
+    pattern_pt = np.matmul(a_pattern.inverse_transform, object_pt)
+    return a_pattern.stripe_at(point(pattern_pt[0], pattern_pt[1], pattern_pt[2]))
+
+
+class Gradient_Pattern(Pattern):
+    def __init__(self, color1, color2, transform=None):
+        have_error = False
+        if not is_vec3(color1):
+            have_error = True
+        if not is_vec3(color2):
+            have_error = True
+            print("in Gradient_Pattern, color2 is not Vec3: ", color2)
+        if have_error:
+            assert (False)
+        
+        super().__init__(transform)
+        self.a = color1
+        self.b = color2
+        self.range = color2-color1
+    
+    def pattern_at(self, pt):
+        if not is_point(pt):
+            print("in Gradient_Pattern::color, pt is not a point: ", pt)
+            assert (False)
+        return self.a + (self.range * (pt.x - math.floor(pt.x)))
+    
+    
+def gradient_pattern(color1, color2, transform=None):
+    return Gradient_Pattern(color1, color2, transform)
+
+
+class Ring_Pattern(Pattern):
+    def __init__(self, color1, color2, transform=None):
+        have_error = False
+        if not is_vec3(color1):
+            have_error = True
+        if not is_vec3(color2):
+            have_error = True
+            print("in Ring_Pattern, color2 is not Vec3: ", color2)
+        if have_error:
+            assert (False)
+        
+        super().__init__(transform)
+        self.a = color1
+        self.b = color2
+    
+    def pattern_at(self, pt):
+        if not is_point(pt):
+            print("in Ring_Pattern::color, pt is not a point: ", pt)
+            assert (False)
+        t = math.floor(math.sqrt((pt.x * pt.x) + (pt.z*pt.z))) % 2
+        return self.a if t==0 else self.b
+
+
+def ring_pattern(color1, color2, transform=None):
+    return Ring_Pattern(color1, color2, transform)
+
+
+class Checkers_Pattern(Pattern):
+    def __init__(self, color1, color2, transform=None):
+        have_error = False
+        if not is_vec3(color1):
+            have_error = True
+        if not is_vec3(color2):
+            have_error = True
+            print("in Checkers_Pattern, color2 is not Vec3: ", color2)
+        if have_error:
+            assert (False)
+        
+        super().__init__(transform)
+        self.a = color1
+        self.b = color2
+    
+    def pattern_at(self, pt):
+        if not is_point(pt):
+            print("in Checkers_Pattern::color, pt is not a point: ", pt)
+            assert (False)
+        t = (math.floor(pt.x) + math.floor(pt.y) + math.floor(pt.z)) % 2
+        return self.a if t == 0 else self.b
+
+
+def checkers_pattern(color1, color2, transform=None):
+    return Checkers_Pattern(color1, color2, transform)
 
 
 
@@ -467,13 +500,7 @@ def world():
     return World()
 
 
-def default_world():
-    new_world = World()
-    new_world.light.append(point_light(point(-10.0, 10.0, -10.0), color(1.0, 1.0, 1.0)))
 
-    new_world.objects.append(sphere(sphere_material=material(material_color=color(0.8, 1.0, 0.6), diffuse=0.7, specular=0.2)))
-    new_world.objects.append(sphere(sphere_transform=scaling(0.5, 0.5, 0.5)))
-    return new_world
 
 
 def intersect_world(w, r):
@@ -506,11 +533,11 @@ class Computations(object):
                     self.n2 = containers[-1].material.refractive_index
                 break
                 
-        self.t = hit_intersection.t
+        self.t = np.float32(hit_intersection.t)
         self.object = hit_intersection.object
         self.point = position(src_ray, self.t)
         self.eye_vector = -src_ray.direction
-        self.normal_vector = normal_at(self.object, self.point)
+        self.normal_vector = self.object.normal_at(self.point)
         if dot(self.normal_vector, self.eye_vector) < 0:
             self.inside = True
             self.normal_vector = -self.normal_vector
@@ -548,9 +575,17 @@ def is_shadowed(w, pt):
 
 
 # for now, just assume a single world light when shadowing.
-def shade_hit(world, comps):
+def shade_hit(world, comps, remaining=5):
     shadowed = is_shadowed(world, comps.over_point)
-    return lighting(comps.object.material, world.light[0], comps.over_point, comps.eye_vector, comps.normal_vector, in_shadow=shadowed)
+    surface = lighting(comps.object.material, comps.object, world.light[0], comps.over_point, comps.eye_vector, comps.normal_vector, in_shadow=shadowed)
+    reflected = reflected_color(world, comps, remaining)
+    refracted = refracted_color(world, comps, remaining)
+    this_material = comps.object.material
+    if (this_material.reflective > 0) and (this_material.transparency > 0):
+        reflectance = schlick(comps)
+        return surface + (reflected * reflectance) + (refracted * (1 - reflectance))
+    else:
+        return surface + reflected + refracted
 
 
 def hit(intersection_list):
@@ -560,7 +595,7 @@ def hit(intersection_list):
     return None
 
 
-def color_at(world, src_ray):
+def color_at(world, src_ray, remaining):
     intersection_list = world.intersect(src_ray)
     if len(intersection_list) == 0:
         return black
@@ -568,11 +603,11 @@ def color_at(world, src_ray):
     for hit in intersection_list:
         if hit.t >= 0:
             found_hit = True
-            return (shade_hit(world, prepare_computations(hit, src_ray)))
+            return (shade_hit(world, prepare_computations(hit, src_ray), remaining))
 
     # if we get here, there were negative hits, but none visible
-    print("hit was at negative t - this shouldn't happen")
-    assert(False)
+    return black
+
     
 
 def intersections(*arg):
@@ -617,8 +652,9 @@ class Camera(object):
         yoffset = (py + 0.5) * self.pixel_size
         world_x = self.half_width - xoffset
         world_y = self.half_height - yoffset
-        pixel = np.matmul(self.inverse_transform, point(world_x, world_y, -1))
-        origin = np.matmul(self.inverse_transform, point(0, 0, 0))
+        
+        pixel = np.matmul(self.inverse_transform, np.array([world_x, world_y, -1, 1], dtype=np.float32))
+        origin = np.matmul(self.inverse_transform, np.array([0, 0, 0, 1], dtype=np.float32))
         direction = normalize(vector(pixel[0]-origin[0], pixel[1]-origin[1], pixel[2]-origin[2]))
         return ray(point(origin[0], origin[1], origin[2]), direction)
 
@@ -631,11 +667,63 @@ def ray_for_pixel(camera, px, py):
     return camera.ray_for_pixel(px, py)
 
 
-def render(camera, world):
+def render(camera, world, max_bounce=5):
     image = canvas(camera.hsize, camera.vsize)
     for y in range(camera.vsize):
         for x in range(camera.hsize):
             this_ray = camera.ray_for_pixel(x, y)
-            pixel_color = color_at(world, this_ray)
+            pixel_color = color_at(world, this_ray, max_bounce)
             image.write_pixel(x, y, pixel_color)
     return(image)
+
+
+def reflected_color(a_world, comps, remaining):
+    if comps.object.material.reflective == 0:
+        return black
+    
+    if remaining < 1:
+        return black
+    
+    reflect_ray = ray(comps.over_point, comps.reflect_vector)
+    temp_color = color_at(a_world, reflect_ray, remaining-1)
+    return (temp_color * comps.object.material.reflective)
+
+
+def refracted_color(a_world, comps, remaining):
+    if comps.object.material.transparency == 0:
+        return black
+    n_ratio = np.float32(comps.n1 / comps.n2)
+    cos_i = dot(comps.eye_vector, comps.normal_vector)
+    sin2_t = (n_ratio * n_ratio) * np.float32(1 - (cos_i * cos_i))
+    if sin2_t > 1:
+        return black
+    
+    cos_t = np.float32(math.sqrt(1.0 - sin2_t))
+    
+    # direction of the refracted ray
+    direction_vector = comps.normal_vector * (n_ratio * cos_i - cos_t) - (comps.eye_vector * n_ratio)
+    
+    # create the refracted ray
+    refract_ray = ray(comps.under_point, direction_vector)
+
+    # Find the color of the refracted ray, making sure to multiply by the transparency value to account for any opacity
+    return (color_at(a_world, refract_ray, remaining-1) * comps.object.material.transparency)
+    
+    
+def schlick(comps):
+    cos_a = dot(comps.eye_vector, comps.normal_vector)
+    
+    if comps.n1 > comps.n2:
+        n = comps.n1 / comps.n2
+        sin2t = (n*n) * (1.0 - (cos_a * cos_a))
+        if sin2t > 1.0:
+            return 1.0
+        
+        cos_t = math.sqrt(1.0 - sin2t)
+        cos_a = cos_t
+    r0 = ((comps.n1 - comps.n2) / (comps.n1 + comps.n2))
+    r02 = (r0*r0)
+    
+    return r02 + (1-r02) * math.pow((1-cos_a), 5)
+
+

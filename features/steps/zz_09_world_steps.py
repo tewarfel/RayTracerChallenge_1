@@ -1,8 +1,12 @@
 from behave import *
 from hamcrest import assert_that, equal_to
-import base
-from parse_type import TypeBuilder
+from vec3 import Vec3, vec3
+from vec4 import Vec4, point, vector
 import numpy as np
+from shape import material, sphere, test_shape, default_world, point_light
+from base import equal, intersect_world, shade_hit, is_shadowed, color_at, World, render, translation, scaling, view_transform, world, camera, color, rotation_y, rotation_z, rotation_x
+from parse_type import TypeBuilder
+from step_helper import *
 
 
 valid_test_objects = ["w", "s1", "s2", "light", "shape", "i", "comps", "outer", "inner"]
@@ -38,12 +42,8 @@ register_type(TestRay=parse_test_ray)
 
 @given("{item:TestObject} ← world()")
 def step_world_create(context, item):
-    try:
-        if (context.dict is None):
-            context.dict = {}
-    except:
-        context.dict = {}
-    context.dict[item] = base.world()
+    ensure_context_has_dict(context)
+    context.dict[item] = world()
 
 
 
@@ -71,38 +71,26 @@ def step_world_item_material_ambient_one(context, item):
 
 @given("{item:TestObject} ← point_light(point({px:g}, {py:g}, {pz:g}), color({red:g}, {green:g}, {blue:g}))")
 def step_impl_point_light_for_materials(context, item, px, py, pz, red, green, blue):
-    try:
-        if (context.dict is None):
-            context.dict = {}
-    except:
-        context.dict = {}
+    ensure_context_has_dict(context)
 
-    real_position = base.point(float(px), float(py), float(pz))
-    real_intensity = base.color(float(red), float(green), float(blue))
-    context.dict[item] = base.point_light(real_position, real_intensity)
+    real_position = point(float(px), float(py), float(pz))
+    real_intensity = color(float(red), float(green), float(blue))
+    context.dict[item] = point_light(real_position, real_intensity)
 
 
 @given("{item:TestObject}.light ← point_light(point({px:g}, {py:g}, {pz:g}), color({red:g}, {green:g}, {blue:g}))")
 def step_impl_point_light_for_world(context, item, px, py, pz, red, green, blue):
-    try:
-        if (context.dict is None):
-            context.dict = {}
-    except:
-        context.dict = {}
+    ensure_context_has_dict(context)
 
-    real_position = base.point(float(px), float(py), float(pz))
-    real_intensity = base.color(float(red), float(green), float(blue))
-    context.dict[item].light = [base.point_light(real_position, real_intensity)]
+    real_position = point(float(px), float(py), float(pz))
+    real_intensity = color(float(red), float(green), float(blue))
+    context.dict[item].light = [point_light(real_position, real_intensity)]
 
 
 @given("{item:TestObject} ← sphere()")
 def step_given_s_is_sphere(context, item):
-    try:
-        if (context.dict is None):
-            context.dict = {}
-    except:
-        context.dict = {}
-    context.dict[str(item)] = base.sphere()
+    ensure_context_has_dict(context)
+    context.dict[str(item)] = sphere()
 
 
 @given("{item:TestObject} is added to {world:TestObject}")
@@ -114,48 +102,32 @@ def step_given_item_added_to_world(context, item, world):
 
 @given("{item:TestObject} ← sphere() with translation({x}, {y}, {z})")
 def step_given_s_is_sphere_with_translation(context, item, x, y, z):
-    try:
-        if (context.dict is None):
-            context.dict = {}
-    except:
-        context.dict = {}
-    context.dict[str(item)] = base.sphere(sphere_transform=base.translation(float(x), float(y), float(z)))
+    ensure_context_has_dict(context)
+    context.dict[str(item)] = sphere(sphere_transform=translation(float(x), float(y), float(z)))
 
 
 @given("{item:TestObject} ← sphere(sphere_material=material(material_color=({red}, {green}, {blue}), diffuse={d}, specular={sp}))")
 def step_impl_sphere_with_material(context, item, red, green, blue, d, sp):
-    the_material_color = base.color(float(red), float(green), float(blue))
-    new_material = base.material(material_color=the_material_color, diffuse=float(d), specular=float(sp))
-    new_sphere = base.sphere(sphere_material=new_material)
-    try:
-        if (context.dict is None):
-            context.dict = {}
-    except:
-        context.dict = {}
+    the_material_color = color(float(red), float(green), float(blue))
+    new_material = material(material_color=the_material_color, diffuse=float(d), specular=float(sp))
+    new_sphere = sphere(sphere_material=new_material)
+    ensure_context_has_dict(context)
     context.dict[str(item)] = new_sphere
 
 
 @given("{item:TestObject} ← sphere(sphere_transform=transform(scaling({x}, {y}, {z})))")
 def step_impl_sphere_with_transform(context, item, x, y, z):
-    new_transform = base.scaling(float(x), float(y), float(z))
-    new_sphere = base.sphere(sphere_transform=new_transform)
-    try:
-        if (context.dict is None):
-            context.dict = {}
-    except:
-        context.dict = {}
+    new_transform = scaling(float(x), float(y), float(z))
+    new_sphere = sphere(sphere_transform=new_transform)
+    ensure_context_has_dict(context)
     context.dict[str(item)] = new_sphere
 
 
 
 @given("{item:TestObject} ← default_world()")
 def step_default_world_create(context, item):
-    try:
-        if (context.dict is None):
-            context.dict = {}
-    except:
-        context.dict = {}
-    context.dict[item] = base.default_world()
+    ensure_context_has_dict(context)
+    context.dict[item] = default_world()
 
 
 
@@ -163,14 +135,10 @@ def step_default_world_create(context, item):
 @given("{item:TestRay} ← ray(point({px}, {py}, {pz}), vector({vx}, {vy}, {vz}))")
 def step_impl_generic_ray_full(context, item, px, py, pz, vx, vy, vz):
 
-    pt = base.point(float(px), float(py), float(pz))
-    vc = base.vector(float(vx), float(vy), float(vz))
-    try:
-        if (context.dict is None):
-            context.dict = {}
-    except:
-        context.dict = {}
-    context.dict[str(item)] = base.ray(pt, vc)
+    pt = point(float(px), float(py), float(pz))
+    vc = vector(float(vx), float(vy), float(vz))
+    ensure_context_has_dict(context)
+    context.dict[str(item)] = ray(pt, vc)
 
 
 
@@ -178,48 +146,32 @@ def step_impl_generic_ray_full(context, item, px, py, pz, vx, vy, vz):
 
 @when("{item:TestObject} ← default_world()")
 def step_default_world_create(context, item):
-    try:
-        if (context.dict is None):
-            context.dict = {}
-    except:
-        context.dict = {}
-    context.dict[item] = base.default_world()
+    ensure_context_has_dict(context)
+    context.dict[item] = default_world()
 
 
 
 @when("{item:ListName} ← intersect_world({w:TestObject}, {r:TestRay})")
 def step_intersect_world_ray(context, item, w, r):
-    try:
-        if (context.dict is None):
-            context.dict = {}
-    except:
-        context.dict = {}
+    ensure_context_has_dict(context)
     test_ray = context.dict[str(r)]
-    context.dict[str(item)] = base.intersect_world(context.dict[str(w)], context.dict[str(r)])
+    context.dict[str(item)] = intersect_world(context.dict[str(w)], context.dict[str(r)])
 
 
 @when("{item:TestVariable} ← shade_hit({w:TestObject}, {comps:TestObject})")
 def step_shade_hit_world(context, item, w, comps):
-    try:
-        if (context.tuple is None):
-            context.tuple = {}
-    except:
-        context.tuple = {}
+    ensure_context_has_tuple(context)
     world_object = context.dict[str(w)]
     comps_object = context.dict[str(comps)]
-    context.tuple[str(item)] = base.shade_hit(world_object, comps_object)
+    context.tuple[str(item)] = shade_hit(world_object, comps_object)
 
 
 @when("{item:TestVariable} ← color_at({w:TestObject}, {r:TestRay})")
 def step_shade_hit_world(context, item, w, r):
-    try:
-        if (context.tuple is None):
-            context.tuple = {}
-    except:
-        context.tuple = {}
+    ensure_context_has_tuple(context)
     world_object = context.dict[str(w)]
     ray_object = context.dict[str(r)]
-    resulting_color = base.color_at(world_object, ray_object)
+    resulting_color = color_at(world_object, ray_object)
     context.tuple[str(item)] = resulting_color
 
 
@@ -235,8 +187,8 @@ def step_default_world_contains_element(context, item, element, item2):
 
     match_found = False
     for source in light_list:
-        if base.equal(source.position,test_value.position):
-            if base.equal(source.intensity, test_value.intensity):
+        if equal(source.position,test_value.position):
+            if equal(source.intensity, test_value.intensity):
                 match_found = True
                 break
     assert(match_found)
@@ -260,7 +212,7 @@ def step_default_world_contains_object(context, item, item2):
                 match_found = False
                 break
    
-        if match_found and base.equal(thing.transform, test_object.transform):
+        if match_found and equal(thing.transform, test_object.transform):
             break
         else:
             match_found = False
@@ -275,7 +227,7 @@ def step_then_is_shadowed_is_false(context, item1, item2):
     assert(item2 in context.tuple.keys())
     world_object = context.dict[str(item1)]
     point_object = context.tuple[str(item2)]
-    result = base.is_shadowed(world_object, point_object)
+    result = is_shadowed(world_object, point_object)
     assert(result == False)
 
 
@@ -285,7 +237,7 @@ def step_then_is_shadowed_is_false(context, item1, item2):
     assert(item2 in context.tuple.keys())
     world_object = context.dict[str(item1)]
     point_object = context.tuple[str(item2)]
-    result = base.is_shadowed(world_object, point_object)
+    result = is_shadowed(world_object, point_object)
     assert(result == True)
 
 
@@ -323,22 +275,14 @@ def step_default_world_first_object(context, item, item2):
 
 @given("{item:TestVariable} ← point({x:g}, {y:g}, {z:g})")
 def step_impl_point_assign_B(context, item, x, y, z):
-    try:
-        if (context.tuple is None):
-            context.tuple = {}
-    except:
-        context.tuple = {}
-    context.tuple[item] = base.point(float(x), float(y), float(z))
+    ensure_context_has_tuple(context)
+    context.tuple[item] = point(float(x), float(y), float(z))
 
 
 
 @given("{item:TestObject} ← true")
 def step_impl_logic_assign_true(context, item):
-    try:
-        if (context.dict is None):
-            context.dict = {}
-    except:
-        context.dict = {}
+    ensure_context_has_dict(context)
     context.dict[item] = True
 
 
@@ -346,53 +290,33 @@ def step_impl_logic_assign_true(context, item):
 
 @given("{item:TestVariable} ← vector({x:g}, √{ynum:g}/{ydenom:g}, -√{znum:g}/{zdenom:g})")
 def step_impl_vector_assign_B(context, item, x, ynum, ydenom, znum, zdenom):
-    try:
-        if (context.tuple is None):
-            context.tuple = {}
-    except:
-        context.tuple = {}
-    context.tuple[item] = base.vector(float(x), np.sqrt(float(ynum)) / float(ydenom), -np.sqrt(float(znum)) / float(zdenom))
+    ensure_context_has_tuple(context)
+    context.tuple[item] = vector(float(x), np.sqrt(float(ynum)) / float(ydenom), -np.sqrt(float(znum)) / float(zdenom))
     
 
 @given("{item:TestVariable} ← vector({x:g}, {y:g}, -{z:g})")
 def step_impl_vector_assign_C(context, item, x, y, z):
-    try:
-        if (context.tuple is None):
-            context.tuple = {}
-    except:
-        context.tuple = {}
-    context.tuple[item] = base.vector(float(x), float(y), -float(z))
+    ensure_context_has_tuple(context)
+    context.tuple[item] = vector(float(x), float(y), -float(z))
 
 
 @given("{item:TestVariable} ← vector({x:g}, {y:g}, {z:g})")
 def step_impl_vector_assign_D(context, item, x, y, z):
-    try:
-        if (context.tuple is None):
-            context.tuple = {}
-    except:
-        context.tuple = {}
-    context.tuple[item] = base.vector(float(x), float(y), float(z))
+    ensure_context_has_tuple(context)
+    context.tuple[item] = vector(float(x), float(y), float(z))
 
 
 @given("{item:TestVariable} ← vector({x:g}, -√{ynum:g}/{ydenom:g}, -√{znum:g}/{zdenom:g})")
 def step_impl_vector_assign_E(context, item, x, ynum, ydenom, znum, zdenom):
-    try:
-        if (context.tuple is None):
-            context.tuple = {}
-    except:
-        context.tuple = {}
-    context.tuple[item] = base.vector(float(x), -np.sqrt(float(ynum)) / float(ydenom),
+    ensure_context_has_tuple(context)
+    context.tuple[item] = vector(float(x), -np.sqrt(float(ynum)) / float(ydenom),
                                           -np.sqrt(float(znum)) / float(zdenom))
 
 
 @given("{item:TestObject} ← material()")
 def step_impl_generic_material(context, item):
-    try:
-        if (context.dict is None):
-            context.dict = {}
-    except:
-        context.dict = {}
-    context.dict[item] = base.material()
+    ensure_context_has_dict(context)
+    context.dict[item] = material()
 
 
 
@@ -412,7 +336,7 @@ def step_set_lighting_values(context, item, material, light, point_position, eye
     point_value = context.tuple[str(point_position)]
     eye_vec_value = context.tuple[str(eye_vector)]
     norm_vec_value = context.tuple[str(normal_vector)]
-    lighting_value = base.lighting(material_val, light_val, point_value, eye_vec_value, norm_vec_value)
+    lighting_value = lighting(material_val, light_val, point_value, eye_vec_value, norm_vec_value)
     context.tuple[str(item)] = lighting_value
 
 
@@ -430,7 +354,7 @@ def step_set_lighting_values_with_shadow(context, item, material, light, point_p
     eye_vec_value = context.tuple[str(eye_vector)]
     norm_vec_value = context.tuple[str(normal_vector)]
     in_shadow_value = context.dict[str(in_shadow)]
-    lighting_value = base.lighting(material_val, light_val, point_value, eye_vec_value, norm_vec_value, in_shadow_value)
+    lighting_value = lighting(material_val, light_val, point_value, eye_vec_value, norm_vec_value, in_shadow_value)
     context.tuple[str(item)] = lighting_value
 
 
@@ -439,8 +363,8 @@ def step_impl_ray_intersect_list_count(context, item, element, red, green, blue)
     assert(item in context.dict.keys())
     local_object_str = "context.dict['"+str(item)+"']."+str(element)
     local_object = eval(local_object_str)
-    value = base.color(float(red), float(green), float(blue))
-    assert(base.equal(local_object, value))
+    value = color(float(red), float(green), float(blue))
+    assert(equal(local_object, value))
 
 
 
@@ -449,8 +373,8 @@ def step_lighting_color_test(context, item, red, green, blue):
     assert(item in context.tuple.keys())
     local_object_str = "context.tuple['"+str(item)+"']"
     local_object = eval(local_object_str)
-    value = base.color(float(red), float(green), float(blue))
-    assert(base.equal(local_object, value))
+    value = color(float(red), float(green), float(blue))
+    assert(equal(local_object, value))
 
 
 @then("{item1:TestVariable} = {item2:TestObject}.material.color")
@@ -459,4 +383,4 @@ def step_then_material_color_test(context, item1, item2):
     assert(item2 in context.dict.keys())
     local_color = context.tuple[str(item1)]
     material_color = context.dict[str(item2)].material.color
-    assert(base.equal(local_color, material_color))
+    assert(equal(local_color, material_color))

@@ -3,7 +3,7 @@ from hamcrest import assert_that, equal_to
 import base
 from parse_type import TypeBuilder
 import numpy as np
-
+from step_helper import *
 
 valid_test_matrices = ["m"]
 parse_test_matrix = TypeBuilder.make_choice(valid_test_matrices)
@@ -27,43 +27,27 @@ register_type(RayElement=parse_ray_element)
 
 @given(u'{item:TestVariable} ← point({x:g}, {y:g}, {z:g})')
 def step_impl_generic_point(context, item, x, y, z):
-    try:
-        if (context.tuple is None):
-            context.tuple = {}
-    except:
-        context.tuple = {}
+    ensure_context_has_tuple(context)
     context.tuple[item] = base.point(float(x), float(y), float(z))
 
 
 @given(u'{item:TestVariable} ← vector({x:g}, {y:g}, {z:g})')
 def step_impl_generic_vector(context, item, x, y, z):
-    try:
-        if (context.tuple is None):
-            context.tuple = {}
-    except:
-        context.tuple = {}
+    ensure_context_has_tuple(context)
     context.tuple[item] = base.vector(float(x), float(y), float(z))
 
 
 
 @given("{item:TestMatrix} ← translation({x:g}, {y:g}, {z:g})")
 def step_impl_generic_translation_matrix(context, item, x, y, z):
-    try:
-        if (context.dict is None):
-            context.dict = {}
-    except:
-        context.dict = {}
+    ensure_context_has_dict(context)
     context.dict[item] = base.translation(float(x), float(y), float(z))
 
 
 
 @given("{item:TestMatrix} ← scaling({x:g}, {y:g}, {z:g})")
 def step_impl_generic_scaling_matrix(context, item, x, y, z):
-    try:
-        if (context.dict is None):
-            context.dict = {}
-    except:
-        context.dict = {}
+    ensure_context_has_dict(context)
     context.dict[item] = base.scaling(float(x), float(y), float(z))
 
 
@@ -72,31 +56,19 @@ def step_impl_generic_scaling_matrix(context, item, x, y, z):
 def step_impl_generic_ray_full(context, item, px, py, pz, vx, vy, vz):
     pt = base.point(float(px), float(py), float(pz))
     vc = base.vector(float(vx), float(vy), float(vz))
-    try:
-        if (context.dict is None):
-            context.dict = {}
-    except:
-        context.dict = {}
+    ensure_context_has_dict(context)
     context.dict[item] = base.ray(pt, vc)
 
 
 
 @when("{item:TestRay} ← ray({origin}, {direction})")
 def step_impl_generic_ray_implied(context, item, origin, direction):
-    try:
-        if (context.tuple is None):
-            context.tuple = {}
-    except:
-        context.tuple = {}
+    ensure_context_has_tuple(context)
     assert(origin in context.tuple.keys())
     assert(direction in context.tuple.keys())
     origin_pt = context.tuple[str(origin)]
     dir_vector = context.tuple[str(direction)]
-    try:
-        if (context.dict is None):
-            context.dict = {}
-    except:
-        context.dict = {}
+    ensure_context_has_dict(context)
     context.dict[item] = base.ray(origin_pt, dir_vector)
 
 

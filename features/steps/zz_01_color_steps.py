@@ -3,6 +3,7 @@ from hamcrest import assert_that, equal_to
 import base
 from parse_type import TypeBuilder
 import numpy as np
+from step_helper import *
 
 valid_test_variables = ["c", "c1", "c2"]
 parse_test_variable = TypeBuilder.make_choice(valid_test_variables)
@@ -74,11 +75,7 @@ def step_then_scalar_divide_equals(context, item1, item2, r, g, b):
 
 @given("{item:TestVariable} ← color({x:g}, {y:g}, {z:g})")
 def step_impl_color(context,item,x,y,z):
-    try:
-        if (context.tuple is None):
-            context.tuple = {}
-    except:
-        context.tuple = {}
+    ensure_context_has_tuple(context)
     context.tuple[item] = base.Vec3(float(x), float(y), float(z))
 
     

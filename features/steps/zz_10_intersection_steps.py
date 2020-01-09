@@ -1,8 +1,12 @@
 from behave import *
 from hamcrest import assert_that, equal_to
-import base
-from parse_type import TypeBuilder
+from vec3 import Vec3, vec3
+from vec4 import Vec4, point, vector
 import numpy as np
+from shape import material, sphere, test_shape, default_world, point_light, glass_sphere
+from base import hit, EPSILON, equal, World, render, translation, scaling, view_transform, intersection, intersections, prepare_computations,  world, camera, color, rotation_y, rotation_z, rotation_x
+from parse_type import TypeBuilder
+from step_helper import *
 
 valid_comps_elements = ["t", "object", "point", "eye_vector", "normal_vector", "inside", "under_point", "over_point"]
 parse_comps_element = TypeBuilder.make_choice(valid_comps_elements)
@@ -36,45 +40,33 @@ register_type(ListName=parse_intersect_list_name)
 
 @given("{item:TestSolid} ← glass_sphere() with translation({x:g}, {y:g}, {z:g})")
 def step_impl_glass_sphere_with_translate(context, item, x, y, z):
-    try:
-        if (context.dict is None):
-            context.dict = {}
-    except:
-        context.dict = {}
-    context.dict[str(item)] = base.glass_sphere(sphere_transform=base.translation(float(x), float(y), float(z)))
+    ensure_context_has_dict(context)
+    context.dict[str(item)] = glass_sphere(sphere_transform=translation(float(x), float(y), float(z)))
 
 
 @given("{item:TestSolid} ← sphere()")
 def step_impl_generic_solid_sphere(context, item):
-    try:
-        if (context.dict is None):
-            context.dict = {}
-    except:
-        context.dict = {}
-    context.dict[str(item)] = base.sphere()
+    ensure_context_has_dict(context)
+    context.dict[str(item)] = sphere()
 
 
 @given("{item:TestObject} ← intersection({time:g}, {thing:TestSolid})")
 def step_intersection_create_given(context, item, time, thing):
-    try:
-        if (context.dict is None):
-            context.dict = {}
-    except:
-        context.dict = {}
-    context.dict[item] = base.intersection(float(time), context.dict[str(thing)])
+    ensure_context_has_dict(context)
+    context.dict[item] = intersection(float(time), context.dict[str(thing)])
 
 
 @given("{item1:ListName} ← intersections({item2:TestObject}, {item3:TestObject})")
 def step_intersection_list_concatenate_given(context, item1, item2, item3):
     assert(item2 in context.dict.keys())
     assert(item3 in context.dict.keys())
-    context.dict[item1] = base.intersections(context.dict[str(item2)], context.dict[str(item3)])
+    context.dict[item1] = intersections(context.dict[str(item2)], context.dict[str(item3)])
 
 
 @given("{item1:ListName} ← intersections({item2:TestObject})")
 def step_intersection_concatenate_single_given(context, item1, item2):
     assert(item2 in context.dict.keys())
-    context.dict[item1] = base.intersections(context.dict[str(item2)])
+    context.dict[item1] = intersections(context.dict[str(item2)])
 
 
 
@@ -84,37 +76,25 @@ def step_intersection_list_concatenate_given(context, item1, item2, item3, item4
     assert(item3 in context.dict.keys())
     assert(item4 in context.dict.keys())
     assert(item5 in context.dict.keys())
-    context.dict[item1] = base.intersections(context.dict[str(item2)], context.dict[str(item3)], context.dict[str(item4)], context.dict[str(item5)])
+    context.dict[item1] = intersections(context.dict[str(item2)], context.dict[str(item3)], context.dict[str(item4)], context.dict[str(item5)])
 
 
 
 @when("{item:TestObject} ← intersection({time:g}, {thing:TestSolid})")
 def step_intersection_create_when(context, item, time, thing):
-    try:
-        if (context.dict is None):
-            context.dict = {}
-    except:
-        context.dict = {}
-    context.dict[item] = base.intersection(float(time), context.dict[str(thing)])
+    ensure_context_has_dict(context)
+    context.dict[item] = intersection(float(time), context.dict[str(thing)])
 
 
 @when("{item:TestObject} ← prepare_computations({intersect:TestObject}, {ray:TestRay})")
 def step_intersection_create_when(context, item, intersect, ray):
-    try:
-        if (context.dict is None):
-            context.dict = {}
-    except:
-        context.dict = {}
-    context.dict[str(item)] = base.prepare_computations(context.dict[str(intersect)], context.dict[str(ray)])
+    ensure_context_has_dict(context)
+    context.dict[str(item)] = prepare_computations(context.dict[str(intersect)], context.dict[str(ray)])
 
 @when("{item:TestObject} ← prepare_computations({intersect:TestObject}, {ray:TestRay}, {intersection_list:ListName})")
 def step_intersection_create_when_ver2(context, item, intersect, ray, intersection_list):
-    try:
-        if (context.dict is None):
-            context.dict = {}
-    except:
-        context.dict = {}
-    context.dict[str(item)] = base.prepare_computations(context.dict[str(intersect)], context.dict[str(ray)], context.dict[str(intersection_list)])
+    ensure_context_has_dict(context)
+    context.dict[str(item)] = prepare_computations(context.dict[str(intersect)], context.dict[str(ray)], context.dict[str(intersection_list)])
 
 
 
@@ -123,13 +103,13 @@ def step_intersection_create_when_ver2(context, item, intersect, ray, intersecti
 def step_intersection_list_concatenate_when(context, item1, item2, item3):
     assert(item2 in context.dict.keys())
     assert(item3 in context.dict.keys())
-    context.dict[item1] = base.intersections(context.dict[str(item2)], context.dict[str(item3)])
+    context.dict[item1] = intersections(context.dict[str(item2)], context.dict[str(item3)])
 
 
 @when("{item:TestObject} ← hit({list:ListName})")
 def step_find_hit_in_intersection_list(context, item, list):
     assert(list in context.dict.keys())
-    context.dict[str(item)] = base.hit(context.dict[str(list)])
+    context.dict[str(item)] = hit(context.dict[str(list)])
 
 
 
@@ -146,7 +126,7 @@ def step_comps_contains_element_value(context, item, element):
     assert(item in context.dict.keys())
     comps_object_str = "context.dict['"+str(item)+"']."+str(element)
     comps_object_element = eval(comps_object_str)
-    assert(base.equal(comps_object_element, False))
+    assert(equal(comps_object_element, False))
 
 
 
@@ -155,7 +135,7 @@ def step_comps_contains_element_value(context, item, element):
     assert(item in context.dict.keys())
     comps_object_str = "context.dict['"+str(item)+"']."+str(element)
     comps_object_element = eval(comps_object_str)
-    assert(base.equal(comps_object_element, True))
+    assert(equal(comps_object_element, True))
 
 
 @then("{item:TestObject}.{element:IntersectionElement} = {value:g}")
@@ -164,7 +144,7 @@ def step_intersection_contains_element(context, item, element, value):
     local_object_str = "context.dict['"+str(item)+"']."+str(element)
     intersection_object = eval(local_object_str)
     test_value = float(value)
-    assert(base.equal(intersection_object, test_value))
+    assert(equal(intersection_object, test_value))
 
 
 
@@ -182,8 +162,8 @@ def step_comps_contains_element_A(context, item1, element1, x, y, z):
     assert (item1 in context.dict.keys())
     comps_object_str = "context.dict['" + str(item1) + "']." + str(element1)
     comps_object_element = eval(comps_object_str)
-    point_value = base.point(float(x), float(y), float(z))
-    assert (base.equal(comps_object_element, point_value))
+    point_value = point(float(x), float(y), float(z))
+    assert (equal(comps_object_element, point_value))
 
 
 @then("{item1:TestObject}.{element1:CompsElement} = vector({x:g}, {y:g}, -{z:g})")
@@ -191,8 +171,8 @@ def step_comps_contains_element_B(context, item1, element1, x, y, z):
     assert (item1 in context.dict.keys())
     comps_object_str = "context.dict['" + str(item1) + "']." + str(element1)
     comps_object_element = eval(comps_object_str)
-    point_value = base.vector(float(x), float(y), -float(z))
-    assert (base.equal(comps_object_element, point_value))
+    point_value = vector(float(x), float(y), -float(z))
+    assert (equal(comps_object_element, point_value))
 
 
 @then("{item1:TestObject}.{element1:CompsElement} = {item2:TestObject}.{element2:IntersectionElement}")
@@ -222,7 +202,7 @@ def step_comps_contains_element_B(context, item1, element1):
     assert (item1 in context.dict.keys())
     comps_object_str = "context.dict['" + str(item1) + "']." + str(element1) +".z"
     comps_object_element = eval(comps_object_str)
-    epsilon_value = base.EPSILON
+    epsilon_value = EPSILON
     assert (comps_object_element < (-epsilon_value/2))
 
 
@@ -231,7 +211,7 @@ def step_comps_contains_element_B(context, item1, element1):
     assert (item1 in context.dict.keys())
     comps_object_str = "context.dict['" + str(item1) + "']." + str(element1) + ".z"
     comps_object_element = eval(comps_object_str)
-    epsilon_value = base.EPSILON
+    epsilon_value = EPSILON
     assert (comps_object_element > (epsilon_value / 2))
 
 

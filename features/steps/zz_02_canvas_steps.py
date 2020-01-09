@@ -3,7 +3,8 @@ from hamcrest import assert_that, equal_to
 import base
 from parse_type import TypeBuilder
 import numpy as np
-from zz_01_color_steps import *
+from step_helper import *
+
 
 valid_test_variables = ["c", "c1", "c2", "c3", "red"]
 parse_test_variable = TypeBuilder.make_choice(valid_test_variables)
@@ -20,11 +21,7 @@ register_type(CanvasComponent=parse_valid_component)
 
 @given(u'{item:TestVariable} ← canvas({width:g}, {height:g})')
 def step_impl_generic_canvas(context, item, width, height):
-    try:
-        if (context.dict is None):
-            context.dict = {}
-    except:
-        context.dict = {}
+    ensure_context_has_dict(context)
     context.dict[item] = base.canvas(int(width), int(height))
     
     
@@ -48,11 +45,7 @@ def step_then_component_equals_value(context, item, r, g, b):
 
 @given("{item:TestVariable} ← color({x:g}, {y:g}, {z:g})")
 def step_impl_color(context, item, x, y, z):
-    try:
-        if (context.dict is None):
-            context.dict = {}
-    except:
-        context.dict = {}
+    ensure_context_has_dict(context)
     context.dict[item] = base.Vec3(float(x), float(y), float(z))
 
 

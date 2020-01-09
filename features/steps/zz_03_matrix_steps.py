@@ -3,22 +3,21 @@ from hamcrest import assert_that, equal_to
 import base
 from parse_type import TypeBuilder
 import numpy as np
-
-from point_vector_steps import *
+from step_helper import *
 
 valid_test_matrices = ["M", "A", "B", "C", "inv", "half_quarter"]
 parse_test_matrix = TypeBuilder.make_choice(valid_test_matrices)
 register_type(TestMatrix=parse_test_matrix)
 
+valid_test_variables = ["b", "a"]
+parse_test_variable = TypeBuilder.make_choice(valid_test_variables)
+register_type(TestVariable=parse_test_variable)
+
 
 #@given("the following 4x4 matrix {item:TestVariable}: {matrix}")
 @given("the following {height:g}x{width:g} matrix {item:TestMatrix}: {matrix}")
 def step_impl_matrix(context, height, width, item, matrix):
-    try:
-        if (context.dict is None):
-            context.dict = {}
-    except:
-        context.dict = {}
+    ensure_context_has_dict(context)
     new_matrix_string = "np.array(" + matrix + ", dtype=float)"
     new_matrix = eval(new_matrix_string)
     assert (new_matrix.shape == (height, width))
@@ -27,11 +26,7 @@ def step_impl_matrix(context, height, width, item, matrix):
 
 @given("{item:TestMatrix} ← transpose(identity_matrix)")
 def step_identity_transpose_matrix(context, item):
-    try:
-        if (context.dict is None):
-            context.dict = {}
-    except:
-        context.dict = {}
+    ensure_context_has_dict(context)
     dim = 4
     new_matrix = np.identity(dim, dtype=float)
     assert (new_matrix.shape == (dim, dim))
@@ -58,11 +53,7 @@ def step_assign_submatrix(context, item1, item2, row, col):
 
 @given("the following matrix {item:TestMatrix}: {matrix}")
 def step_impl_matrix(context, item, matrix):
-    try:
-        if (context.dict is None):
-            context.dict = {}
-    except:
-        context.dict = {}
+    ensure_context_has_dict(context)
     new_matrix_string = "np.array(" + matrix + ", dtype=float)"
     new_matrix = eval(new_matrix_string)
     context.dict[item] = new_matrix

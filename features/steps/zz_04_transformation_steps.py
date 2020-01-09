@@ -3,7 +3,7 @@ from hamcrest import assert_that, equal_to
 import base
 from parse_type import TypeBuilder
 import numpy as np
-
+from step_helper import *
 
 valid_test_matrices = ["M", "m", "A", "B", "C", "transform", "inv", "half_quarter", "full_quarter", "T", "t"]
 parse_test_matrix = TypeBuilder.make_choice(valid_test_matrices)
@@ -30,31 +30,19 @@ register_type(TestVariable=parse_test_variable)
 
 @given(u'{item:TestVariable} ← vector({x:g}, {y:g}, {z:g})')
 def step_impl_generic_vector(context, item, x, y, z):
-    try:
-        if (context.tuple is None):
-            context.tuple = {}
-    except:
-        context.tuple = {}
+    ensure_context_has_tuple(context)
     context.tuple[item] = base.vector(float(x), float(y), float(z))
 
 
 @given("{item:TestMatrix} ← translation({x:g}, {y:g}, {z:g})")
 def step_impl_generic_translation_matrix(context, item, x, y, z):
-    try:
-        if (context.dict is None):
-            context.dict = {}
-    except:
-        context.dict = {}
+    ensure_context_has_dict(context)
     context.dict[item] = base.translation(float(x), float(y), float(z))
 
 
 @given("{item:TestMatrix} ← scaling({x:g}, {y:g}, {z:g})")
 def step_impl_generic_scaling_matrix(context, item, x, y, z):
-    try:
-        if (context.dict is None):
-            context.dict = {}
-    except:
-        context.dict = {}
+    ensure_context_has_dict(context)
     context.dict[item] = base.scaling(float(x), float(y), float(z))
 
 
@@ -66,21 +54,13 @@ def step_given_matrix_is_inv_transform(context, item1):
 
 @given("{item1:TestMatrix} ← shearing({xy:g}, {xz:g}, {yx:g}, {yz:g}, {zx:g}, {zy:g})")
 def step_given_matrix_is_shearing_transform(context, item1, xy, xz, yx, yz, zx, zy):
-    try:
-        if (context.dict is None):
-            context.dict = {}
-    except:
-        context.dict = {}
+    ensure_context_has_dict(context)
     context.dict[str(item1)] = base.shearing(xy, xz, yx, yz, zx, zy)
 
 
 @given("{item:TestMatrix} ← rotation_x({numerator} / {denominator:g})")
 def step_impl_rotation_x_rational(context, item, numerator, denominator):
-    try:
-        if (context.dict is None):
-            context.dict = {}
-    except:
-        context.dict = {}
+    ensure_context_has_dict(context)
 
     val_num = np.pi if str(numerator) == "π" else float(numerator)
     val_denom = float(denominator)
@@ -89,11 +69,7 @@ def step_impl_rotation_x_rational(context, item, numerator, denominator):
 
 @given("{item:TestMatrix} ← rotation_y({numerator} / {denominator:g})")
 def step_impl_rotation_y_rational(context, item, numerator, denominator):
-    try:
-        if (context.dict is None):
-            context.dict = {}
-    except:
-        context.dict = {}
+    ensure_context_has_dict(context)
 
     val_num = np.pi if str(numerator) == "π" else float(numerator)
     val_denom = float(denominator)
@@ -102,11 +78,7 @@ def step_impl_rotation_y_rational(context, item, numerator, denominator):
 
 @given("{item:TestMatrix} ← rotation_z({numerator} / {denominator:g})")
 def step_impl_rotation_z_rational(context, item, numerator, denominator):
-    try:
-        if (context.dict is None):
-            context.dict = {}
-    except:
-        context.dict = {}
+    ensure_context_has_dict(context)
 
     val_num = np.pi if str(numerator) == "π" else float(numerator)
     val_denom = float(denominator)
@@ -115,21 +87,13 @@ def step_impl_rotation_z_rational(context, item, numerator, denominator):
 
 @given("{variable:TestVariable} ← point({x:g}, {y:g}, {z:g})")
 def step_impl_indexed_point2(context, variable, x, y, z):
-    try:
-        if (context.tuple is None):
-            context.tuple = {}
-    except:
-        context.tuple = {}
+    ensure_context_has_tuple(context)
     context.tuple[str(variable)] = base.point(float(x), float(y), float(z))
 
 
 @given("{variable:TestVariable} ← point({x:g}, {y:g}, -{z:g})")
 def step_impl_indexed_neg_point2(context, variable, x, y, z):
-    try:
-        if (context.tuple is None):
-            context.tuple = {}
-    except:
-        context.tuple = {}
+    ensure_context_has_tuple(context)
     context.tuple[str(variable)] = base.point(float(x), float(y), -float(z))
 
 
@@ -164,11 +128,7 @@ def step_impl_when_view_transform(context, item1, item2, item3, item4):
     vup = context.tuple[str(item4)]
     vto = context.tuple[str(item3)]
     vfrom = context.tuple[str(item2)]
-    try:
-        if (context.dict is None):
-            context.dict = {}
-    except:
-        context.dict = {}
+    ensure_context_has_dict(context)
     context.dict[str(item1)] = base.view_transform(vfrom, vto, vup)
 
 

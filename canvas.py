@@ -8,9 +8,9 @@ import cv2
 #cython: linetrace=True
 #cython: language_level=3
 
-from vec4 import *
-from vec3 import *
-
+#from vec4 import *
+#from vec3 import *
+from memblock import *
 
 class Canvas:
     def __init__(self, width, height, background, data):

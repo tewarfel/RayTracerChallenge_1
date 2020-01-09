@@ -8,8 +8,9 @@ import cv2
 #cython: linetrace=True
 #cython: language_level=3
 
-from vec4 import *
-from vec3 import *
+from memblock import *
+#from vec4 import *
+#from vec3 import *
 from canvas import *
 
 

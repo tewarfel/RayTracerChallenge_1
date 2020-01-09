@@ -3,6 +3,7 @@ from hamcrest import assert_that, equal_to
 import base
 from parse_type import TypeBuilder
 import numpy as np
+from step_helper import *
 
 valid_test_objects = ["hsize", "vsize","field_of_view", "c", "w"]
 parse_test_object = TypeBuilder.make_choice(valid_test_objects)
@@ -23,22 +24,14 @@ register_type(TestRay=parse_test_ray)
 
 @given("{item:TestObject} ← {value_num}/{value_denom:g}")
 def step_given_object_value(context, item, value_num, value_denom):
-    try:
-        if (context.dict is None):
-            context.dict = {}
-    except:
-        context.dict = {}
+    ensure_context_has_dict(context)
     value_num = np.pi if value_num == "π" else float(value_num)
     value_denom = float(value_denom)
     context.dict[str(item)] = (value_num / value_denom)
 
 @given("{item:TestVariable} ← point({x:g}, {y:g}, {z})")
 def step_given_object_point_value(context, item, x, y, z):
-    try:
-        if (context.tuple is None):
-            context.tuple = {}
-    except:
-        context.tuple = {}
+    ensure_context_has_tuple(context)
     print("assigned ", item, context.tuple[str(item)])
     context.tuple[str(item)] = base.point(float(x), float(y), float(z))
 
@@ -46,22 +39,14 @@ def step_given_object_point_value(context, item, x, y, z):
 
 @given("{item:TestObject} ← {value:g}")
 def step_given_object_value(context, item, value):
-    try:
-        if (context.dict is None):
-            context.dict = {}
-    except:
-        context.dict = {}
+    ensure_context_has_dict(context)
     context.dict[str(item)] = float(value)
 
 
 @given("{item:TestObject} ← camera({hsize:g}, {vsize:g}, {fov_numerator}/{fov_denominator:g})")
 def step_given_create_camera(context, item, hsize, vsize, fov_numerator, fov_denominator):
     fov_numerator = np.pi if fov_numerator=="π" else float(fov_numerator)
-    try:
-        if (context.dict is None):
-            context.dict = {}
-    except:
-        context.dict = {}
+    ensure_context_has_dict(context)
     context.dict[item] = base.camera(float(hsize), float(vsize), (fov_numerator/float(fov_denominator)))
 
 
@@ -87,11 +72,7 @@ def step_when_create_camera(context, item, hsize, vsize, fov):
 
 @when("{item:TestRay} ← ray_for_pixel({camera:TestObject}, {x:g}, {y:g})")
 def step_when_create_ray_for_pixel(context, item, camera, x, y):
-    try:
-        if (context.dict is None):
-            context.dict = {}
-    except:
-        context.dict = {}
+    ensure_context_has_dict(context)
     context.dict[item] = base.ray_for_pixel(context.dict[str(camera)], float(x), float(y))
 
 
@@ -106,11 +87,7 @@ def step_camera_element_has_transform_value(context, item, element, rot_num, rot
 
 @when("image ← render({camera:TestObject}, {world:TestObject})")
 def step_when_render_world(context, camera, world):
-    try:
-        if (context.dict is None):
-            context.dict = {}
-    except:
-        context.dict = {}
+    ensure_context_has_dict(context)
     context.dict["image"] = base.render(context.dict[str(camera)], context.dict[str(world)])
 
 
