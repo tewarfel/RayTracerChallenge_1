@@ -1,4 +1,10 @@
-from base import *
+#from vec3 import Vec3, vec3
+#from vec4 import Vec4, point, vector
+import numpy as np
+
+from memblock import *
+from shape import material, sphere, test_shape, point_light
+from base import render, translation, scaling, view_transform, world, camera, color, rotation_y, rotation_z, rotation_x
 
 
 def __main__():
@@ -38,14 +44,14 @@ def __main__():
     this_camera.set_transform(view_transform(point(0, 1.5, -5), point(0, 1, 0), vector(0, 1, 0)))
     
     c = render(this_camera, this_world)
-    c.write_image("first_sphere_render_h.png")
+    c.write_image("first_sphere_render_q.png")
 
 __main__()
 
-print("Vec4s still active:", Vec4.active_count)
-print("max number of Vec4s active:", Vec4.max_active)
-print("Vec4s used:", Vec4.total_used)
+#print("Vec4s still active:", Vec4.active_count)
+#print("max number of Vec4s active:", Vec4.max_active)
+#print("Vec4s used:", Vec4.total_used)
 
-print("Vec3s still active:", Vec3.active_count)
-print("max number of Vec3s active:", Vec3.max_active)
-print("Vec3s used:", Vec3.total_used)
+#print("Vec3s still active:", Vec3.active_count)
+#print("max number of Vec3s active:", Vec3.max_active)
+#print("Vec3s used:", Vec3.total_used)

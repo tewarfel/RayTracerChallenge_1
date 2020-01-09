@@ -7,33 +7,26 @@ I am using the python Behave module (a cucumber-like module for Python) to imple
 
 
 ## Overview
-This is a first-pass implementation of the functions / structures using Python3 covering content through
-the end of chapter 8. I have slightly modified the Gherkin feature test code to simplify parsing of matrix 
-and element definitions to use this implementation; some tests that pass are ahead of chapter 8 and I have
+This is a second-pass implementation of the functions / structures using Python3 and a little bit of Cython
+covering content through the end of chapter 11, and tests through chapter 10.
+Gherkin feature test code has been modified to simplify parsing of matrix and element definitions 
+to use this implementation; some tests that pass are ahead of chapter 8 and I have
 left them in feature files.  Other tests included in the publisher-provided Gherkin .feature files from
 later chapters have been removed, and future chapter .feature files have been omitted altogether.
 
-I make no claims of optimality or clarity but am simply archiving the current state, primarily for my 
-future reference, but also to share with anyone is interested.   
-
 As stated in the book, the key data structures are 4-element floating-point vectors (representing 
 3D directional vectors and 3D points in space), 3-element floating-point vectors (representing a color),
-and 4x4 floating-point matrices representing 3D transform operations.
-
-The 3 and 4-element floating-point vector data structures (named Vec3 and Vec4, respectively) are 
-subclassed from the Python Collections "namedtuple" object.  This allows their data to be accessed 
-either as a 1-D array or list of vector elements (e.g. vect1[0], vect1[1]), or by "vector.element" 
-names (e.g. vect1.x, vect1.y).  The 4x4 float matrices are handled as Numpy Ndarrays.
-This simplifies implementation of matrix/vector multiplication by allowing use of the numpy matmul(),
-as well as simplifying vector/scalar operations.
-
-The "putting it together" example at the end of chapter 7, augmented by the addition of shadows from
-chapter 8 and changing the left wall color to blue, is the code in "first_render.py".  
+and 4x4 floating-point matrices representing 3D transform operations. These have been moved from "Vec3" and 
+"Vec4", which used named_tuples,  into "memblock.pyx", a cython module that pre-compiles some of the more 
+intensive allocation/freeing operations.  "MemBlock", an internal Cython program, preallocates 2 Numpy
+arrays: a 3x512 or 4x512 block of float32, and a 1x512 block of uint8 to mark "free" or "in-use".
+The new implementations of Vec3 and Vec4 request rows in the table for storage, and mark them as free when done.
+This is single-threaded, non-thread-safe code.
 
 
 ## Methods
-The Vec3 and Vec4 object classes have been augmented to track both total references used, as well 
-as maximum references in use.
+The Vec3 and Vec4 object classes had been augmented to track both total references used, as well 
+as maximum references in use.  I've since replaced them with 
 
 For the "putting it together" example (end of chapter 7) with shadow addition (from chapter 8),
 I rendered the scene onto a 100 pixel wide by 50 pixel tall canvas.
@@ -43,7 +36,18 @@ macOS High Sierra, version 10.13.6.  Python version was 3.7.5 (from "homebrew" h
 and development environment was Pycharm Professional 2019.3 (https://www.jetbrains.com/pycharm/ ) using
 the yappi 1.2.3 profiler.  Program runs and renders as a single foreground thread.
 
-## Results
+## Updated Results
+Using Cython-compiled blockmem-based Vec3 and Vec4 has reduced test image (100x50) runtime from 
+**34** seconds to **11** seconds.
+
+With the profiler, execution time is only **39** seconds, down from 158 seconds previously.
+
+Looking at the profiler, I don't much more can be squeezed out while keeping the majority of the code 
+in simple Python.  Dot product, consuming 8% of total cycles, is probably the next potential spot to 
+try to optimize. 
+
+
+## Previous Results
 *Without profiling or reference counting, execution time was **34 seconds**.
 
 *Without profiling (but with Vec3/Vec4 reference counting), execution time was **36 seconds**.
