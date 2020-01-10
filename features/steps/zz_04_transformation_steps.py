@@ -17,16 +17,6 @@ parse_test_variable = TypeBuilder.make_choice(valid_test_variables)
 register_type(TestVariable=parse_test_variable)
 
 
-#@given(u'{item:TestVariable} ← point({x:g}, {y:g}, {z:g})')
-#def step_impl_generic_point(context, item, x, y, z):
-#    try:
-#        if (context.tuple is None):
-#            context.tuple = {}
-#    except:
-#        context.tuple = {}
-#    context.tuple[item] = point(float(x), float(y), float(z))
-
-
 @given(u'{item:TestVariable} ← vector({x:g}, {y:g}, {z:g})')
 def step_impl_generic_vector(context, item, x, y, z):
     ensure_context_has_tuple(context)
@@ -243,7 +233,7 @@ def step_then_matrix_mul_point_equals_point(context, item1, x, y, z):
 def step_then_matrix_mul_point_equals_point(context, item1, x, y, z):
     assert (item1 in context.tuple.keys())
     ip1 = context.tuple[str(item1)]
-    result = point(float(x), float(y), float(z))
+    result = point(np.float32(x), np.float32(y), np.float32(z))
     assert (equal(ip1, result))
 
 

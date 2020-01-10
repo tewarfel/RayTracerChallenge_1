@@ -3,7 +3,7 @@
 
 from memblock import *
 import numpy as np
-from shape import material, sphere, test_shape, plane, point_light
+from shape import material, sphere, cube, test_shape, plane, point_light
 
 from base import render, translation, scaling, view_transform, world, camera, color, rotation_y, rotation_z, rotation_x, stripe_pattern
 
@@ -11,7 +11,7 @@ from base import render, translation, scaling, view_transform, world, camera, co
 def main():
     floor = plane()
     floor.material = material()
-    floor.material.color = color(0.9, 0.57, 0.35)
+    floor.material.color = color(0.9, 0.35, 0.25)
     floor.material.specular = 0
     
     
@@ -28,8 +28,8 @@ def main():
                                                                   shininess=300),
                     sphere_transform=np.matmul(translation(1.5, 0.5, -0.5), scaling(0.65, 0.65, 0.65)))
         
-    left  = sphere(sphere_material=material(material_color=color(1, 0.8, 0.1), diffuse=0.7, specular=0.3),
-                    sphere_transform=np.matmul(translation(-1.5, 0.33, -0.75), scaling(0.33, 0.33, 0.33)))
+    left  = cube(cube_material=material(material_color=color(0.2, 0.2, 0.4), diffuse=0.2, specular=0.9, transparency=0.9, shininess=250, refractive_index=1.25),
+                    cube_transform=np.matmul(translation(-1.5, 0.33, -0.75), scaling(0.4, 0.4, 0.4)))
         
     light_source = point_light(point(-10, 10, -10), color(1, 1, 1))
     
@@ -37,11 +37,11 @@ def main():
     this_world.objects=[floor, middle, left, right]
     this_world.light = [light_source]
     
-    this_camera = camera(400, 200, np.pi/3)
+    this_camera = camera(1600, 800, np.pi/3)
     this_camera.set_transform(view_transform(point(0, 1.5, -5), point(0, 1, 0), vector(0, 1, 0)))
     
     c = render(this_camera, this_world)
-    c.write_image("second_sphere_render_p.png")
+    c.write_image("second_render_cubeC.png")
 
 if __name__ == "__main__":
     main()

@@ -2,7 +2,7 @@
 import numpy as np
 from memblock import *
 from canvas import *
-from shape import material, sphere, test_shape, default_world, point_light, glass_sphere, cube, cylinder, cone, group
+from shape import material, sphere, test_shape, default_world, point_light, glass_sphere, cube, cylinder, cone, group, world_to_object, normal_to_world, normal_at
 from base import ray, refracted_color, intersection, intersections, reflected_color, cofactor, determinant, minor, submatrix, shearing, is_invertible, inverse, hit, EPSILON, equal, World, render, translation, magnitude, normalize, dot, cross, reflect, scaling, view_transform, intersection, intersections, prepare_computations,  world, camera, color, rotation_y, rotation_z, rotation_x
 
 

@@ -90,7 +90,7 @@ class Shape(object):
         self.inverse_transform = inverse(t)
         
         
-    def normal_at(self, pt):
+    def old_normal_at(self, pt):
         [ox,oy,oz,ow] = pt
         local_point = Vec4(np.matmul(self.inverse_transform, np.array([ox,oy,oz,ow], dtype=np.float32)))
         [ox,oy,oz,ow] = self.local_normal_at(local_point)
@@ -98,6 +98,39 @@ class Shape(object):
         m = math.sqrt((wn[0]*wn[0]) + (wn[1]*wn[1]) + (wn[2]*wn[2]))
         s = 1.0 / m
         return vector(s*wn[0], s*wn[1], s*wn[2])
+
+
+    def world_to_object(self, point):
+        if self.parent is None:
+            return np.matmul(self.inverse_transform, point, dtype=np.float32)
+        else:
+            return np.matmul(self.inverse_transform, self.parent.world_to_object(point), dtype=np.float32)
+
+
+    def normal_to_world(self, normal_vector):
+        transformed_normal = Vec4(np.matmul(np.transpose(self.inverse_transform), normal_vector, dtype=np.float32))
+        transformed_normal[3] = 0
+        normalized_transform = transformed_normal.normalize()
+        if self.parent is None:
+            return normalized_transform
+        else:
+            return self.parent.normal_to_world(normalized_transform)
+
+
+    def normal_at(self, world_point):
+        return self.normal_to_world( self.local_normal_at( self.world_to_object(world_point) ))
+        
+        
+        
+    #    [ox,oy,oz,ow] = pt
+    #    local_point = Vec4(np.matmul(self.inverse_transform, np.array([ox,oy,oz,ow], dtype=np.float32)))
+    #    [ox,oy,oz,ow] = self.local_normal_at(local_point)
+    #    wn = np.matmul(np.transpose(self.inverse_transform), np.array([ox,oy,oz,ow], dtype=np.float32))
+    #    m = math.sqrt((wn[0]*wn[0]) + (wn[1]*wn[1]) + (wn[2]*wn[2]))
+    #    s = 1.0 / m
+    #    return vector(s*wn[0], s*wn[1], s*wn[2])
+
+
 
     def local_normal_at(self, local_pt):
         return(vector(local_pt[0], local_pt[1], local_pt[2]))
@@ -521,8 +554,36 @@ def intersect(shape, src_ray):
     return shape.intersect(src_ray)
 
 
-def normal_at(shape, pt):
-    return shape.normal_at(pt)
+def world_to_object(a_shape, a_point):
+    transformed_point = world_to_object(a_shape.parent, a_point) if a_shape.parent is not None else a_point
+    return np.matmul(a_shape.inverse_transform, transformed_point, dtype=np.float32)
+
+
+def normal_to_world(a_shape, a_normal):
+    return a_shape.normal_to_world(a_normal)
+    
+def old_normal_to_world(a_shape, a_normal):
+    print("getting normal on shape ", a_shape.name, a_shape.instance_id)
+    transformed_normal = Vec4(np.matmul(np.transpose(a_shape.inverse_transform), a_normal, dtype=np.float32))
+    transformed_normal[3] = 0
+    normalized_transform = transformed_normal.normalize()
+    print("external normalized vector is ", normalized_transform)
+    if a_shape.parent is not None:
+        print("calling normal to world on ", a_shape.parent.name, a_shape.parent.instance_id, " with normal ",
+              normalized_transform)
+        normalized_transform = normal_to_world(a_shape.parent, normalized_transform)
+        print("parent's normal_to_world (", a_shape.parent.name, a_shape.parent.instance_id, " returned ",
+              normalized_transform)
+    print("normal to world for ", a_shape.name, a_shape.instance_id, " returning ", normalized_transform)
+    return normalized_transform
+
+
+
+def normal_at(shape, world_point):
+     return shape.normal_at(world_point)
+#    local_point = world_to_object(shape, world_point)
+#    local_normal = shape.local_normal_at(local_point)
+#    return normal_to_world(shape, local_normal)
 
 
 class Point_Light(object):

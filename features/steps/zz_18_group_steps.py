@@ -9,9 +9,14 @@ from parse_type import TypeBuilder
 from step_helper import *
 
 
-valid_test_objects = ["g", "s", "s1", "s2", "s3"]
+valid_test_objects = ["g", "s", "s1", "s2", "s3", "g1", "g2"]
 parse_test_object = TypeBuilder.make_choice(valid_test_objects)
 register_type(TestObject=parse_test_object)
+
+valid_test_variables = ["p", "v", "n"]
+parse_test_variable = TypeBuilder.make_choice(valid_test_variables)
+register_type(TestVariable=parse_test_variable)
+
 
 
 valid_intersect_list_names = ["xs"]
@@ -55,6 +60,14 @@ def step_group_given_set_transform_scaling(context, g, x,y,z):
     context.dict[str(g)].set_transform(scaling(np.float32(x), np.float32(y), np.float32(z)))
 
 
+@given("set_transform({g:TestObject}, rotation_y({numerator}/{denominator:g}))")
+def step_group_given_set_transform_rotation_y(context, g, numerator, denominator):
+    assert (g in context.dict.keys())
+    numerator = np.pi if numerator == "π" else np.float32(numerator)
+    context.dict[str(g)].set_transform(rotation_y(numerator/np.float32(denominator)))
+
+
+
 @when("{nml:TestVariable} ← local_normal_at({item1:TestObject}, point({x:g}, {y:g}, {z:g}))")
 def step_group_local_normal(context, nml, item1, x, y, z):
     assert (item1 in context.dict.keys())
@@ -74,12 +87,30 @@ def step_group_intersect_list_is_group_intersect(context, list, item, r):
     context.dict[str(list)] = context.dict[str(item)].intersect(context.dict[str(r)])
 
 
+@when("{p:TestVariable} ← world_to_object({s:TestObject}, point({x}, {y}, {z}))")
+def step_group_when_point_is_world_to_object(context, p, s, x, y, z):
+    assert(s in context.dict.keys())
+    ensure_context_has_tuple(context)
+    context.tuple[str(p)] = world_to_object(context.dict[str(s)], point(np.float32(x), np.float32(y), np.float32(z)))
+
+
 @when("add_child({g:TestObject}, {s:TestObject})")
 def step_group_when_add_child(context, g, s):
     assert(s in context.dict.keys())
     assert(g in context.dict.keys())
     context.dict[str(g)].add_child(context.dict[str(s)])
     
+    
+
+@when("{p:TestVariable} ← normal_to_world({s:TestObject}, vector(√{xnum:g}/{xdenom:g}, √{ynum:g}/{ydenom:g}, √{znum:g}/{zdenom:g}))")
+def step_group_when_point_is_world_to_object(context, p, s, xnum, xdenom, ynum, ydenom, znum, zdenom):
+    assert(s in context.dict.keys())
+    ensure_context_has_tuple(context)
+    context.tuple[str(p)] = normal_to_world(context.dict[str(s)], vector(np.float32(np.sqrt(float(xnum)))/np.float32(xdenom),
+                                                                        np.float32(np.sqrt(float(ynum)))/np.float32(ydenom),
+                                                                        np.float32(np.sqrt(float(znum)))/np.float32(zdenom)))
+
+
     
 @then("{s:TestObject}.transform = identity_matrix")
 def step_group_default_transform_is_identity(context, s):

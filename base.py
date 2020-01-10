@@ -62,14 +62,9 @@ def reflect(incoming, nml):
     return incoming - (nml * 2 * dot(incoming, nml))
 
 
-EPSILON = 0.00005
+EPSILON = 0.000065
 
 def equal(a, b):
-#    cdef int i1
-#    cdef int height, width, i, j
-#    cdef float n, m, delta, t
-    
-
     if isinstance(a, int):
         a = np.float32(a)
         
@@ -83,13 +78,14 @@ def equal(a, b):
      
     elif ((str(type(a)) == "<class 'memblock.Vec4'>") and (str(type(b)) == "<class 'memblock.Vec4'>") or
           (str(type(a)) == "<class 'memblock.Vec3'>") and (str(type(b)) == "<class 'memblock.Vec3'>")):
-        for i1 in range(len(a)):
-            n = a[i1]
-            m = b[i1]
-            delta = (n - m) if n > m else (m - n)
-            if delta > EPSILON:
-                return False
-        return True
+        return a.__eq__(b)
+#        for i1 in range(len(a)):
+#            n = a[i1]
+#            m = b[i1]
+#            delta = (n - m) if n > m else (m - n)
+#            if delta > EPSILON:
+#                return False
+#        return True
     elif (type(a) == np.ndarray) and (type(b) == np.ndarray):
         if np.array_equal(a,b):
             return True
@@ -126,7 +122,8 @@ def equal(a, b):
         if delta > EPSILON:
             return False
         return True
-
+    elif type(a) == np.ndarray and type(b) == Vec4:
+        return (b.__eq__(a))
     else:
         print("Undefined case for equal")
         print("a type is ", type(a), "  b type is ", type(b))

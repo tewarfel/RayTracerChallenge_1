@@ -2,6 +2,9 @@
 import numpy as np
 cimport numpy as np
 
+cdef np.float32_t EPSILON = 0.000065
+
+
 DTYPE = np.float32
 ctypedef np.float32_t DTYPE_T
 
@@ -205,6 +208,29 @@ class Vec4():
     def __len__(self):
         return Vec4.memblock.width
 
+    def __eq__(self, other):
+        cdef int i
+        cdef DTYPE_T c, d
+        if type(other)==Vec4:
+            for i in range(4):
+                c = Vec4.memblock.block[self.index, i]
+                d = Vec4.memblock.block[other.index, i]
+                delta = (c-d) if c>d else (d-c)
+                if delta > EPSILON:
+                    return False
+            return True
+        elif type(other)==np.ndarray:
+            for i in range(4):
+                c=Vec4.memblock.block[self.index, i]
+                d=other[i]
+                delta = (c-d) if c>d else (d-c)
+                if delta > EPSILON:
+                    return False
+            return True
+        else:
+            print("don't know how to compare Vec4 to ", type(other))
+            assert(False)
+
     def mag_squared(self):
         return np.sum(Vec4.memblock.block[self.index, :] *
                       Vec4.memblock.block[self.index, :])
@@ -381,6 +407,30 @@ class Vec3():
             if Vec3.memblock.block[self.index, i] != Vec3.memblock.block[other.index, i]:
                 return False
         return True
+    
+    def __eq__(self, other):
+        cdef int i
+        cdef DTYPE_T c, d
+        if type(other)==Vec3:
+            for i in range(3):
+                c = Vec3.memblock.block[self.index, i]
+                d = Vec3.memblock.block[other.index, i]
+                delta = (c-d) if c>d else (d-c)
+                if delta > EPSILON:
+                    return False
+            return True
+        elif type(other)==np.ndarray:
+            for i in range(3):
+                c=Vec3.memblock.block[self.index, i]
+                d=other[i]
+                delta = (c-d) if c>d else (d-c)
+                if delta > EPSILON:
+                    return False
+            return True
+        else:
+            print("don't know how to compare Vec3 to ", type(other))
+            assert(False)
+    
     
     def __sub__(self, other):
         if isinstance(other, (int, float, np.float32, np.float64)):
