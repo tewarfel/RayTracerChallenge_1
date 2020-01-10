@@ -251,7 +251,7 @@ class Ray(object):
         
         
     def position(self, t):
-        return self.origin + (self.direction * t)
+        return Vec4(self.origin + (self.direction * t))
  
     
     def transform(self, transformation_matrix):
@@ -533,7 +533,7 @@ class Computations(object):
                 
         self.t = np.float32(hit_intersection.t)
         self.object = hit_intersection.object
-        self.point = position(src_ray, self.t)
+        self.point = src_ray.position(self.t)
         self.eye_vector = -src_ray.direction
         self.normal_vector = self.object.normal_at(self.point)
         if dot(self.normal_vector, self.eye_vector) < 0:

@@ -102,7 +102,7 @@ class Shape(object):
 
     def world_to_object(self, point):
         if self.parent is None:
-            return np.matmul(self.inverse_transform, point, dtype=np.float32)
+            return Vec4(np.matmul(self.inverse_transform, point, dtype=np.float32))
         else:
             return np.matmul(self.inverse_transform, self.parent.world_to_object(point), dtype=np.float32)
 
@@ -562,22 +562,6 @@ def world_to_object(a_shape, a_point):
 def normal_to_world(a_shape, a_normal):
     return a_shape.normal_to_world(a_normal)
     
-def old_normal_to_world(a_shape, a_normal):
-    print("getting normal on shape ", a_shape.name, a_shape.instance_id)
-    transformed_normal = Vec4(np.matmul(np.transpose(a_shape.inverse_transform), a_normal, dtype=np.float32))
-    transformed_normal[3] = 0
-    normalized_transform = transformed_normal.normalize()
-    print("external normalized vector is ", normalized_transform)
-    if a_shape.parent is not None:
-        print("calling normal to world on ", a_shape.parent.name, a_shape.parent.instance_id, " with normal ",
-              normalized_transform)
-        normalized_transform = normal_to_world(a_shape.parent, normalized_transform)
-        print("parent's normal_to_world (", a_shape.parent.name, a_shape.parent.instance_id, " returned ",
-              normalized_transform)
-    print("normal to world for ", a_shape.name, a_shape.instance_id, " returning ", normalized_transform)
-    return normalized_transform
-
-
 
 def normal_at(shape, world_point):
      return shape.normal_at(world_point)
